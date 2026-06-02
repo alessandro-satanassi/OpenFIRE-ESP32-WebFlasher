@@ -602,7 +602,39 @@
     function logMsg(msg) {
         const logArea = document.getElementById('log-area');
         logArea.style.display = 'block';
-        logArea.value += msg + '\n';
+
+        // Mappa delle traduzioni per i messaggi fissi della libreria esptool
+        const esptoolTranslations = {
+            "esptool.js": "Driver esptool.js",
+            "Connecting...": "Connessione in corso...",
+            "Detecting chip type...": "Rilevamento tipo chip...",
+            "Uploading stub...": "Caricamento stub di comunicazione...",
+            "Running stub...": "Esecuzione stub...",
+            "Stub running...": "Stub in esecuzione...",
+            "Changing baudrate to 921600": "Impostazione baudrate a 921600",
+            "Changed": "Baudrate modificato",
+            "Flash ID:": "ID Flash:",
+            "Not changing the image": "Nessuna modifica all'immagine",
+            "Compressed": "Compresso",
+            "bytes to": "byte verso",
+            "Writing at": "Scrittura all'indirizzo",
+            "Wrote": "Scritto",
+            "at": "a",
+            "in": "in",
+            "seconds.": "secondi.",
+            "Leaving...": "Chiusura connessione...",
+            "Hard resetting via RTS pin...": "Reset hardware tramite pin RTS..."
+        };
+
+        // Applichiamo la traduzione se il messaggio esiste nella mappa
+        let translatedMsg = msg;
+        for (const [english, italian] of Object.entries(esptoolTranslations)) {
+            if (translatedMsg.includes(english)) {
+                translatedMsg = translatedMsg.replace(english, italian);
+            }
+        }
+
+        logArea.value += translatedMsg + '\n';
         logArea.scrollTop = logArea.scrollHeight;
     }
 
