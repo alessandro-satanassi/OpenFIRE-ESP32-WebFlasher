@@ -726,11 +726,17 @@
             progressText.innerText = t('successInfo');
             progressFill.style.backgroundColor = "var(--accent)";
 
-            // 4. Reset del dispositivo (CORRETTO IN after)
+            // 4. Reset del dispositivo
             try {
                 await esploader.after("hard_reset");
             } catch (resetErr) {
                 logMsg(t('errReset'));
+            }
+
+            // 5. RILASCIO DELLA PORTA (FONDAMENTALE PER IL RIAVVIO WEB)
+            if (transport) {
+                await transport.disconnect();
+                logMsg("Porta seriale chiusa e rilasciata al sistema.");
             }
             
         } catch (error) {
