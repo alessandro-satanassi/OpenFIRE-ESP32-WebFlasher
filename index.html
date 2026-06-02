@@ -667,7 +667,6 @@
                 progressText.innerText = t('loadingDrivers');
                 logMsg(t('loadingDrivers'));
                 try {
-                    //const esptoolModule = await import("https://unpkg.com/esptool-js@0.6.0/bundle.js");
                     const esptoolModule = await import("./js/bundle.js");
                     window.ESPLoader = esptoolModule.ESPLoader;
                     window.Transport = esptoolModule.Transport;
@@ -686,29 +685,47 @@
             progressText.setAttribute('data-i18n', 'connChip'); 
             progressText.innerText = t('connChip');
             const transport = new window.Transport(port);
-            const esploader = new window.ESPLoader(transport, 921600, {
-                logMsg: logMsg,
-                debugMsg: () => {} 
+            
+            // ----------------------------------------------------
+            // 1. NUOVA SINTASSI 0.6.0: Inizializzazione ESPLoader 
+            // ----------------------------------------------------
+            const esploader = new window.ESPLoader({
+                transport: transport,
+                baudrate: 921600,
+                terminal: {
+                    clean: () => {},
+                    writeLine: (data) => logMsg(data),
+                    write: (data) => logMsg(data)
+                }
             });
 
             logMsg(t('connChip'));
-            await esploader.main_fn();
+            
+            // ----------------------------------------------------
+            // 2. NUOVA SINTASSI 0.6.0: Connessione al chip
+            // ----------------------------------------------------
+            await esploader.main();
+            
             logMsg(t('handshake'));
-
             logMsg(t('startWrite'));
             progressText.removeAttribute('data-i18n'); 
-            await esploader.write_flash(
-                [{ data: firmwareString, address: 0x0 }],
-                'keep', 
-                'keep', 
-                'keep', 
-                0,      
-                (fileIndex, written, total) => {
+            
+            // ----------------------------------------------------
+            // 3. NUOVA SINTASSI 0.6.0: Scrittura della memoria Flash
+            // ----------------------------------------------------
+            await esploader.write_flash({
+                fileArray: [{ data: firmwareString, address: 0x0 }],
+                flashSize: 'keep',
+                flashMode: 'keep',
+                flashFreq: 'keep',
+                eraseAll: false,
+                compress: true,
+                reportProgress: (fileIndex, written, total) => {
                     const pct = Math.round((written / total) * 100);
                     progressFill.style.width = pct + '%';
                     progressText.innerText = `${t('writePct')} ${pct}%`;
                 }
-            );
+            });
 
             logMsg(t('flashSuccess'));
             progressText.setAttribute('data-i18n', 'successInfo'); 
