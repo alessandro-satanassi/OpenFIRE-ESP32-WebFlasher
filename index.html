@@ -602,7 +602,7 @@
     function logMsg(msg) {
         const logArea = document.getElementById('log-area');
         logArea.style.display = 'block';
-
+        /*
         // Mappa delle traduzioni per i messaggi fissi della libreria esptool
         const esptoolTranslations = {
             "esptool.js": "Driver esptool.js",
@@ -633,7 +633,7 @@
                 translatedMsg = translatedMsg.replace(english, italian);
             }
         }
-
+        */
         logArea.value += translatedMsg + '\n';
         logArea.scrollTop = logArea.scrollHeight;
     }
@@ -764,6 +764,7 @@
             progressText.innerText = t('connChip');
             const transport = new window.Transport(port);
             
+            /*
             // 1. Inizializzazione ESPLoader 
             const esploader = new window.ESPLoader({
                 transport: transport,
@@ -772,6 +773,46 @@
                     clean: () => {},
                     writeLine: (data) => logMsg(data),
                     write: (data) => logMsg(data)
+                }
+            });
+            */
+
+            // 2. Connessione al chip
+            const esploader = new window.ESPLoader({
+                transport: transport,
+                baudrate: 921600,
+                terminal: {
+                    clean: () => {},
+                    writeLine: (data) => {
+                        // Traduciamo qui prima di passare a logMsg
+                        let tradotto = data;
+                        const esptoolTranslations = {
+                            "Connecting...": "Connessione in corso...",
+                            "Detecting chip type...": "Rilevamento tipo chip...",
+                            "Uploading stub...": "Caricamento stub...",
+                            "Running stub...": "Esecuzione stub...",
+                            "Stub running...": "Stub in esecuzione...",
+                            "Changing baudrate to": "Modifica baudrate a",
+                            "Changed": "Baudrate modificato",
+                            "Flash ID:": "ID Flash:",
+                            "Not changing the image": "Nessuna modifica all'immagine",
+                            "Compressed": "Compresso",
+                            "bytes to": "byte verso",
+                            "Writing at": "Scrittura all'indirizzo",
+                            "Wrote": "Scritto",
+                            "at": "a",
+                            "in": "in",
+                            "seconds.": "secondi.",
+                            "Leaving...": "Chiusura connessione...",
+                            "Hard resetting via RTS pin...": "Reset hardware in corso..."
+                        };
+
+                        for (const [en, it] of Object.entries(esptoolTranslations)) {
+                            if (tradotto.includes(en)) tradotto = tradotto.replace(en, it);
+                        }
+                        logMsg(tradotto);
+                    },
+                    write: (data) => { /* logMsg(data) */ } // write Line è sufficiente
                 }
             });
 
