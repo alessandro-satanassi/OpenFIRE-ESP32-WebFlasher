@@ -660,7 +660,41 @@
             progressText.setAttribute('data-i18n', 'waitPort');
             progressText.innerText = t('waitPort');
             logMsg(t('waitPort'));
-            const port = await navigator.serial.requestPort(); 
+            
+            //const port = await navigator.serial.requestPort();
+
+            // --- TRUCCO ESP WEB TOOLS (Versione 100% Completa Ufficiale) ---
+            const espFilters = [
+                // QinHeng Electronics (CH34x - Cloni e schede economiche, incluso il tuo)
+                { usbVendorId: 0x1A86, usbProductId: 0x7523 }, // CH340
+                { usbVendorId: 0x1A86, usbProductId: 0x55D4 }, // CH9102
+                { usbVendorId: 0x1A86, usbProductId: 0x55D3 }, // CH343
+                
+                // Silicon Labs (CP210x - DevKit ufficiali e schede di alta fascia)
+                { usbVendorId: 0x10C4, usbProductId: 0xEA60 }, // CP2102
+                { usbVendorId: 0x10C4, usbProductId: 0xEA70 }, // CP2105
+                { usbVendorId: 0x10C4, usbProductId: 0xEA71 }, // CP2108
+                
+                // Espressif Systems (USB Nativa di ESP32-S2, ESP32-S3, C3, C6)
+                { usbVendorId: 0x303A, usbProductId: 0x1001 }, // Espressif USB JTAG/Serial
+                { usbVendorId: 0x303A, usbProductId: 0x1002 }, // Espressif ESP32-S2 USB JTAG/Serial
+                { usbVendorId: 0x303A, usbProductId: 0x1009 }, // Espressif ESP32-S3 USB JTAG/Serial
+                
+                // FTDI (Molto rari oggi, ma usati su vecchie schede)
+                { usbVendorId: 0x0403, usbProductId: 0x6001 }, // FT232R
+                { usbVendorId: 0x0403, usbProductId: 0x6015 }, // FT231X
+                { usbVendorId: 0x0403, usbProductId: 0x601C }, // FT232H
+                { usbVendorId: 0x0403, usbProductId: 0x6011 }, // FT4232H
+                { usbVendorId: 0x0403, usbProductId: 0x6010 }, // FT2232H
+                
+                // Schede particolari o programmatori esterni
+                { usbVendorId: 0x2341, usbProductId: 0x0043 }, // Arduino Uno (usato a volte come bridge seriale)
+                { usbVendorId: 0x2341, usbProductId: 0x0001 }  // Arduino Uno R3
+            ];
+            
+            // Apriamo il popup mostrando SOLO i chip compatibili
+            const port = await navigator.serial.requestPort({ filters: espFilters }); 
+            // ---------------------------------------------------------------
 
             if (!window.ESPLoader || !window.Transport) {
                 progressText.setAttribute('data-i18n', 'loadingDrivers');
@@ -726,31 +760,32 @@
             progressText.innerText = t('successInfo');
             progressFill.style.backgroundColor = "var(--accent)";
 
-            // 4. RESET HARDWARE NATIVO (Metodo ESP Web Tools)
+            // 4. RESET HARDWARE NATIVO (Segnali Simultanei)
             try {
-                logMsg("Esecuzione Hard Reset fisico (DTR/RTS)...");
+                logMsg("Esecuzione Hard Reset (Pulse EN)...");
                 
-                // Scavalchiamo esptool e forziamo i segnali nativi di Chrome
-                if (port && port.setSignals) {
-                    // Passo 1: DTR=false, RTS=true 
-                    // (La differenza di potenziale attiva il transistor e tira a massa il pin EN)
-                    await port.setSignals({ dataTerminalReady: false, requestToSend: true });
-                    await new Promise(resolve => setTimeout(resolve, 100)); // Aspetta 100 millisecondi
-                    
-                    // Passo 2: DTR=false, RTS=false 
-                    // (Rilascia il pin EN. La resistenza di pull-up lo riporta a 3.3V accendendo la scheda)
-                    await port.setSignals({ dataTerminalReady: false, requestToSend: false });
-                    await new Promise(resolve => setTimeout(resolve, 50));
-                }
+                // Passo 1: Invia DTR e RTS nello stesso esatto pacchetto USB.
+                // Questo tira a massa il pin EN (Reset) in modo pulito.
+                await port.setSignals({ dataTerminalReady: false, requestToSend: true });
+                await new Promise(resolve => setTimeout(resolve, 250)); // Pausa vitale di 250ms
+                
+                // Passo 2: Rilascia i pin. L'ESP32 inizia l'accensione.
+                await port.setSignals({ dataTerminalReady: false, requestToSend: false });
+                
+                // Passo 3: PAUSA LUNGA FONDAMENTALE.
+                // Diamo 1 secondo intero al chip per fare il boot ed entrare nel tuo firmware.
+                // Se chiudiamo la porta prima, Chrome fa crashare i pin e blocca il micro.
+                await new Promise(resolve => setTimeout(resolve, 1000)); 
+                
             } catch (resetErr) {
-                logMsg(t('errReset'));
+                logMsg("Avviso: Reset automatico non supportato dal sistema.");
             }
 
             // 5. RILASCIO TOTALE DELLA PORTA
             if (transport) {
                 await transport.disconnect();
-                logMsg("Porta seriale chiusa e sganciata. ESP32 Riavviato!");
-            }
+                logMsg("Porta seriale chiusa. Il dispositivo è pronto!");
+            }            
                                
         } catch (error) {
             let msg = error.message || "Unknown error.";
