@@ -667,7 +667,8 @@
                 progressText.innerText = t('loadingDrivers');
                 logMsg(t('loadingDrivers'));
                 try {
-                    const esptoolModule = await import("https://unpkg.com/esptool-js@0.6.0/bundle.js");
+                    //const esptoolModule = await import("https://unpkg.com/esptool-js@0.6.0/bundle.js");
+                    const esptoolModule = await import("./js/bundle.js");
                     window.ESPLoader = esptoolModule.ESPLoader;
                     window.Transport = esptoolModule.Transport;
                 } catch (importErr) {
