@@ -680,12 +680,13 @@
             
             // Scarica direttamente senza limiti API
             const firmwareBuffer = await downloadFirmware(fileUrl);
-            const firmwareString = new Uint8Array(firmwareBuffer);
+            const firmwareData = new Uint8Array(firmwareBuffer); // Rinominato in firmwareData
 
             progressText.setAttribute('data-i18n', 'connChip'); 
             progressText.innerText = t('connChip');
             const transport = new window.Transport(port);
             
+            // 1. Inizializzazione ESPLoader 
             const esploader = new window.ESPLoader({
                 transport: transport,
                 baudrate: 921600,
@@ -698,14 +699,16 @@
 
             logMsg(t('connChip'));
             
+            // 2. Connessione al chip
             await esploader.main();
             
             logMsg(t('handshake'));
             logMsg(t('startWrite'));
             progressText.removeAttribute('data-i18n'); 
             
-            await esploader.write_flash({
-                fileArray: [{ data: firmwareString, address: 0x0 }],
+            // 3. Scrittura della memoria Flash (CORRETTO IN writeFlash)
+            await esploader.writeFlash({
+                fileArray: [{ data: firmwareData, address: 0x0 }],
                 flashSize: 'keep',
                 flashMode: 'keep',
                 flashFreq: 'keep',
@@ -723,12 +726,13 @@
             progressText.innerText = t('successInfo');
             progressFill.style.backgroundColor = "var(--accent)";
 
+            // 4. Reset del dispositivo (CORRETTO IN after)
             try {
-                await esploader.hard_reset();
+                await esploader.after("hard_reset");
             } catch (resetErr) {
                 logMsg(t('errReset'));
             }
-
+            
         } catch (error) {
             let msg = error.message || "Unknown error.";
             
