@@ -655,14 +655,12 @@
         progressFill.style.width = '0%';
         progressFill.style.backgroundColor = "var(--success)";
         progressText.removeAttribute('data-i18n'); 
-        
+
         try {
             progressText.setAttribute('data-i18n', 'waitPort');
             progressText.innerText = t('waitPort');
             logMsg(t('waitPort'));
             
-            //const port = await navigator.serial.requestPort();
-
             // --- TRUCCO ESP WEB TOOLS (Versione 100% Completa Ufficiale) ---
             const espFilters = [
                 // QinHeng Electronics (CH34x - Cloni e schede economiche, incluso il tuo)
@@ -692,11 +690,25 @@
                 { usbVendorId: 0x2341, usbProductId: 0x0001 }  // Arduino Uno R3
             ];
             
-            // Apriamo il popup mostrando SOLO i chip compatibili
-            const port = await navigator.serial.requestPort({ filters: espFilters }); 
-            // ---------------------------------------------------------------
+            // Recuperiamo le porte autorizzate e filtriamo quelle compatibili attualmente connesse
+            const allAuthorizedPorts = await navigator.serial.getPorts();
+            const availableAuthorizedPorts = allAuthorizedPorts.filter(p => {
+                const info = p.getInfo();
+                return espFilters.some(f => f.usbVendorId === info.usbVendorId && (!f.usbProductId || f.usbProductId === info.usbProductId));
+            });
 
-            if (!window.ESPLoader || !window.Transport) {
+            let port;
+            if (availableAuthorizedPorts.length === 1) {
+                // Trovata una sola porta nota valida: connessione automatica
+                port = availableAuthorizedPorts[0];
+                logMsg("Porta nota rilevata. Connessione automatica...");
+            } else {
+                // Prima volta o conflitto: mostriamo il popup filtrato
+                port = await navigator.serial.requestPort({ filters: espFilters }); 
+            }
+            // ---------------------------------------------------------------        
+
+        if (!window.ESPLoader || !window.Transport) {
                 progressText.setAttribute('data-i18n', 'loadingDrivers');
                 progressText.innerText = t('loadingDrivers');
                 logMsg(t('loadingDrivers'));
