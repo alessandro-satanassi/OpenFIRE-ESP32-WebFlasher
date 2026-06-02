@@ -686,9 +686,6 @@
             progressText.innerText = t('connChip');
             const transport = new window.Transport(port);
             
-            // ----------------------------------------------------
-            // 1. NUOVA SINTASSI 0.6.0: Inizializzazione ESPLoader 
-            // ----------------------------------------------------
             const esploader = new window.ESPLoader({
                 transport: transport,
                 baudrate: 921600,
@@ -701,18 +698,12 @@
 
             logMsg(t('connChip'));
             
-            // ----------------------------------------------------
-            // 2. NUOVA SINTASSI 0.6.0: Connessione al chip
-            // ----------------------------------------------------
             await esploader.main();
             
             logMsg(t('handshake'));
             logMsg(t('startWrite'));
             progressText.removeAttribute('data-i18n'); 
             
-            // ----------------------------------------------------
-            // 3. NUOVA SINTASSI 0.6.0: Scrittura della memoria Flash
-            // ----------------------------------------------------
             await esploader.write_flash({
                 fileArray: [{ data: firmwareString, address: 0x0 }],
                 flashSize: 'keep',
@@ -737,7 +728,7 @@
             } catch (resetErr) {
                 logMsg(t('errReset'));
             }
-            
+
         } catch (error) {
             let msg = error.message || "Unknown error.";
             
