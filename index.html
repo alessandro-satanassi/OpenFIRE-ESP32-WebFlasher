@@ -726,19 +726,32 @@
             progressText.innerText = t('successInfo');
             progressFill.style.backgroundColor = "var(--accent)";
 
-            // 4. Reset del dispositivo
+            // 4. RESET HARDWARE NATIVO (Metodo ESP Web Tools)
             try {
-                await esploader.after("hard_reset");
+                logMsg("Esecuzione Hard Reset fisico (DTR/RTS)...");
+                
+                // Scavalchiamo esptool e forziamo i segnali nativi di Chrome
+                if (port && port.setSignals) {
+                    // Passo 1: DTR=false, RTS=true 
+                    // (La differenza di potenziale attiva il transistor e tira a massa il pin EN)
+                    await port.setSignals({ dataTerminalReady: false, requestToSend: true });
+                    await new Promise(resolve => setTimeout(resolve, 100)); // Aspetta 100 millisecondi
+                    
+                    // Passo 2: DTR=false, RTS=false 
+                    // (Rilascia il pin EN. La resistenza di pull-up lo riporta a 3.3V accendendo la scheda)
+                    await port.setSignals({ dataTerminalReady: false, requestToSend: false });
+                    await new Promise(resolve => setTimeout(resolve, 50));
+                }
             } catch (resetErr) {
                 logMsg(t('errReset'));
             }
 
-            // 5. RILASCIO DELLA PORTA (FONDAMENTALE PER IL RIAVVIO WEB)
+            // 5. RILASCIO TOTALE DELLA PORTA
             if (transport) {
                 await transport.disconnect();
-                logMsg("Porta seriale chiusa e rilasciata al sistema.");
+                logMsg("Porta seriale chiusa e sganciata. ESP32 Riavviato!");
             }
-            
+                               
         } catch (error) {
             let msg = error.message || "Unknown error.";
             
