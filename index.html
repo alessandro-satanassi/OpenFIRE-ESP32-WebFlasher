@@ -49,7 +49,7 @@
             grid-template-columns: 2.2fr 1fr; 
             gap: 40px;
             margin-bottom: 10px; 
-            /* STRETCH: Forza la colonna destra ad avere la stessa identica altezza della sinistra */
+            /* STRETCH: Torna dinamico! La colonna destra segue perfettamente la sinistra */
             align-items: stretch; 
         }
 
@@ -89,8 +89,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            /* L'altezza segue la colonna di sinistra grazie ad align-items: stretch nel parent */
-            height: 100%;
+            /* L'altezza è fluida (100%), segue lo spazio creato dai menu di sinistra */
+            height: 100%; 
             box-sizing: border-box;
         }
         .board-preview-container img { max-width: 100%; height: auto; max-height: 250px; display: none; }
@@ -107,7 +107,7 @@
         .placeholder-content svg {
             margin-bottom: 15px;
             opacity: 0.8;
-            filter: drop-shadow(0px 4px 8px rgba(0,0,0,0.5)); /* Ombra per profondità */
+            filter: drop-shadow(0px 4px 8px rgba(0,0,0,0.5)); 
         }
 
         .info-box {
@@ -185,7 +185,7 @@
                 </select>
             </div>
 
-            <div class="form-group" id="boardGroup" style="display: none; margin-bottom: 0;">
+            <div class="form-group" id="boardGroup" style="visibility: hidden; margin-bottom: 0;">
                 <label for="boardType" data-i18n="boardLabel">2. Choose your Board (ESP32-S3):</label>
                 <select id="boardType"></select>
             </div>
@@ -237,14 +237,12 @@
                         <path d="M85 55 L75 65 L75 75" fill="none" stroke="#333" stroke-width="1.5"/>
                         
                         <rect x="32" y="50" width="56" height="65" fill="url(#coreGlow)" stroke="#3a3a3a" stroke-width="1" rx="2"/>
-                        
                         <polygon points="60,60 70,85 55,80 50,100 45,80 55,75" fill="url(#fireGradient)"/>
                         
                         <rect x="35" y="122" width="4" height="8" fill="#cda434"/>
                         <rect x="42" y="122" width="4" height="8" fill="#111" stroke="#444" stroke-width="1"/>
                         <rect x="74" y="122" width="4" height="8" fill="#cda434"/>
                         <rect x="81" y="122" width="4" height="8" fill="#111" stroke="#444" stroke-width="1"/>
-                        
                         <polygon points="26,42 32,42 26,48" fill="#d32f2f"/>
                     </svg>
                     <span data-i18n="boardPlaceholder">-- Select a board --</span>
@@ -694,7 +692,10 @@
             const previousBoard = boardSelect.value; 
             
             boardSelect.innerHTML = `<option value="" data-i18n="selectBoard">${t('selectBoard')}</option>`;
-            boardGroup.style.display = dev ? 'block' : 'none';
+            //boardGroup.style.display = dev ? 'block' : 'none';
+            //fsGroup.style.display = (dev === 'LIGHTGUN') ? 'block' : 'none';
+            // Sostituiamo display con visibility per mantenere le proporzioni del layout
+            boardGroup.style.visibility = dev ? 'visible' : 'hidden';
             fsGroup.style.display = (dev === 'LIGHTGUN') ? 'block' : 'none';
             
             // Invece di nascondere il box, ripristiniamo il placeholder
