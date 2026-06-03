@@ -46,14 +46,12 @@
         /* --- LAYOUT A COLONNE (PERCENTUALI) --- */
         .split-layout {
             display: grid;
-            /* Somma = 97%. Lascia esattamente un 3% di spazio vuoto (gap) in mezzo */
             grid-template-columns: 71% 26%; 
             justify-content: space-between;
-            margin-bottom: 10px; 
-            align-items: stretch; /* Allinea perfettamente le altezze */
+            margin-bottom: 25px; /* <-- AGGIORNATO: uniforma lo spazio verticale a 25px */
+            align-items: stretch; 
         }
         
-        /* TRUCCO CSS GRID: min-height: 0 impedisce all'immagine di forzare e dilatare la riga */
         .right-col {
             min-height: 0; 
             height: 100%;
@@ -85,28 +83,26 @@
         select:focus { outline: none; border-color: var(--accent); }
         select:disabled { background-color: #333; color: #777; cursor: not-allowed; }
         
-        /* --- BOX IMMAGINE (BLINDATO CON POSITION: RELATIVE) --- */
+        /* --- BOX IMMAGINE --- */
         .board-preview-container {
-            position: relative; /* FONDAMENTALE: Ancora gli elementi interni */
+            position: relative; 
             background-color: #171717; 
             border: 1px dashed var(--border);
             border-radius: 8px; 
             width: 100%;
-            height: 100%; /* Prende l'altezza dettata ESATTAMENTE dalla colonna sinistra */
+            height: 100%; 
             box-sizing: border-box;
         }
         
-        /* IMMAGINE: Fuori dal flusso, non può dilatare il box */
         .board-preview-container img { 
             position: absolute;
             top: 15px; bottom: 15px; left: 15px; right: 15px;
             width: calc(100% - 30px);
             height: calc(100% - 30px);
-            object-fit: contain; /* Scala mantenendo le proporzioni */
+            object-fit: contain; 
             display: none; 
         }
         
-        /* PLACEHOLDER: Fuori dal flusso anche lui */
         .placeholder-content {
             position: absolute;
             top: 0; bottom: 0; left: 0; right: 0;
