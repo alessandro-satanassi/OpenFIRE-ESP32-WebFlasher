@@ -46,16 +46,13 @@
         /* --- LAYOUT A COLONNE (PERCENTUALI) --- */
         .split-layout {
             display: grid;
-            /* Sinistra invariata (65%), Destra più stretta (25%), il resto è spazio vuoto in mezzo */
             grid-template-columns: 65% 25%; 
             justify-content: space-between;
             margin-bottom: 10px; 
             align-items: stretch; /* Allinea perfettamente le altezze */
         }
         
-        /* TRUCCO CSS GRID: min-height: 0 impedisce all'immagine di forzare e dilatare la riga */
         .right-col {
-            min-height: 0; 
             height: 100%;
         }
 
@@ -85,41 +82,43 @@
         select:focus { outline: none; border-color: var(--accent); }
         select:disabled { background-color: #333; color: #777; cursor: not-allowed; }
         
-        /* --- BOX IMMAGINE (ALTEZZA FLUIDA) --- */
+        /* --- BOX IMMAGINE (BLINDATO CON POSITION: RELATIVE) --- */
         .board-preview-container {
-            text-align: center; 
-            padding: 15px; /* Leggermente ridotto per adattarsi al box più stretto */
+            position: relative; /* FONDAMENTALE: Ancora gli elementi interni */
             background-color: #171717; 
             border: 1px dashed var(--border);
             border-radius: 8px; 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100%; /* Segue l'altezza creata dai menu di sinistra */
+            width: 100%;
+            height: 100%; /* Prende l'altezza dettata ESATTAMENTE dalla colonna sinistra */
             box-sizing: border-box;
         }
         
-        /* ADATTAMENTO DINAMICO IMMAGINE (Senza pixel fissi) */
+        /* IMMAGINE: Fuori dal flusso, non può dilatare il box */
         .board-preview-container img { 
-            max-width: 100%; 
-            max-height: 100%; /* Si adatta da sola alla dimensione massima del box */
-            object-fit: contain; /* La scala mantenendo le proporzioni corrette */
+            position: absolute;
+            top: 15px; bottom: 15px; left: 15px; right: 15px;
+            width: calc(100% - 30px);
+            height: calc(100% - 30px);
+            object-fit: contain; /* Scala mantenendo le proporzioni */
             display: none; 
         }
         
-        /* --- PLACEHOLDER (CHIP ESP32 SVG AGGRESSIVO) --- */
+        /* PLACEHOLDER: Fuori dal flusso anche lui */
         .placeholder-content {
+            position: absolute;
+            top: 0; bottom: 0; left: 0; right: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100%;
             color: #666;
             font-style: italic;
             font-size: 14px;
+            padding: 15px;
+            box-sizing: border-box;
         }
         .placeholder-content svg {
-            max-height: 60%; /* Si adatta se il box dovesse ridursi su schermi piccoli */
+            max-height: 60%; 
             height: 135px; 
             width: auto;
             margin-bottom: 15px;
@@ -161,7 +160,7 @@
         
         @media (max-width: 768px) {
             .split-layout { grid-template-columns: 1fr; }
-            .board-preview-container { min-height: 180px; }
+            .board-preview-container { min-height: 200px; height: auto; }
         }
     </style>
 </head>
