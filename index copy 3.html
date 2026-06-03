@@ -27,13 +27,13 @@
             background-color: var(--bg-color);
             color: var(--text-main);
             margin: 0;
-            padding: 40px 20px;
+            padding: 40px 20px; /* Più spazio sopra e sotto */
             display: flex;
             justify-content: center;
         }
         .container {
             background-color: var(--panel-bg);
-            max-width: 950px; 
+            max-width: 950px; /* <--- Aumentato per PC Desktop */
             width: 100%;
             padding: 40px;
             border-radius: 10px;
@@ -43,11 +43,10 @@
             box-sizing: border-box; 
         }
         
-        /* --- LAYOUT A COLONNE SBILANCIATO (Come da Schizzo) --- */
+        /* --- NUOVO LAYOUT A COLONNE --- */
         .split-layout {
             display: grid;
-            /* La colonna di sinistra è 1.4 volte più larga di quella di destra */
-            grid-template-columns: 1.4fr 1fr;
+            grid-template-columns: 1fr 1fr;
             gap: 40px;
             margin-bottom: 25px;
             align-items: start;
@@ -68,9 +67,8 @@
             width: auto;
         }
 
-        h1 { margin-top: 0; color: var(--accent); font-size: 26px; text-align: left; margin-bottom: 30px; }
-        
-        .form-group { margin-bottom: 22px; }
+        h1 { margin-top: 0; color: var(--accent); font-size: 26px; text-align: left; margin-bottom: 25px; }
+        .form-group { margin-bottom: 20px; }
         label { display: block; margin-bottom: 8px; font-weight: bold; color: var(--text-muted); }
         select {
             width: 100%; padding: 12px; border-radius: 5px; border: 1px solid var(--border);
@@ -79,42 +77,20 @@
         select:focus { outline: none; border-color: var(--accent); }
         select:disabled { background-color: #333; color: #777; cursor: not-allowed; }
         
-        /* --- BOX IMMAGINE FISSO --- */
         .board-preview-container {
             text-align: center; 
             padding: 20px;
-            background-color: #171717; 
-            border: 1px dashed var(--border);
-            border-radius: 8px; 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 280px; /* Mantiene l'altezza anche da vuoto */
-            height: 100%;
-            box-sizing: border-box;
+            background-color: #171717; border: 1px dashed var(--border);
+            border-radius: 8px; display: none;
+            margin-bottom: 20px;
         }
-        .board-preview-container img { max-width: 100%; height: auto; max-height: 250px; display: none; }
-        
-        /* --- PLACEHOLDER (CHIP ESP32 SVG) --- */
-        .placeholder-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: #666;
-            font-style: italic;
-            font-size: 14px;
-        }
-        .placeholder-content svg {
-            margin-bottom: 15px;
-            opacity: 0.6;
-        }
+        .board-preview-container img { max-width: 100%; height: auto; max-height: 250px; } /* Immagine più grande */
 
         .info-box {
             padding: 15px; font-size: 14px; line-height: 1.5; border-radius: 5px;
         }
         .warning-box {
             background-color: rgba(211, 47, 47, 0.1); border-left: 4px solid var(--danger);
-            margin-bottom: 25px; /* Spazio prima del bottone */
         }
         .obsolete-box {
             background-color: rgba(255, 152, 0, 0.1); border-left: 4px solid var(--warning); 
@@ -130,7 +106,7 @@
         button:disabled { background-color: #555; cursor: not-allowed; color: #999;}
         
         #log-area {
-            width: 100%; height: 220px; background-color: #000; color: #0f0; 
+            width: 100%; height: 220px; background-color: #000; color: #0f0; /* Altezza aumentata */
             font-family: monospace; font-size: 13px; padding: 15px; border-radius: 5px;
             border: 1px solid var(--border); overflow-y: auto; margin-top: 20px;
             box-sizing: border-box; display: none;
@@ -140,12 +116,6 @@
             border-radius: 10px; overflow: hidden; margin-top: 15px; display: none;
         }
         .progress-fill { height: 100%; background-color: var(--success); width: 0%; transition: width 0.2s; }
-        
-        /* Responsive fallback per schermi piccoli (es. ridimensionamento finestra) */
-        @media (max-width: 768px) {
-            .split-layout { grid-template-columns: 1fr; }
-            .board-preview-container { min-height: 150px; }
-        }
     </style>
 </head>
 <body>
@@ -159,6 +129,13 @@
     </div>
 
     <h1 data-i18n="title">OpenFIRE ESP32 Flasher</h1>
+    
+    <div class="form-group">
+        <label for="versionSelect" data-i18n="versionLabel">Firmware Version:</label>
+        <select id="versionSelect">
+            <option value="" data-i18n="loadingVersions">Loading versions...</option>
+        </select>
+    </div>
 
     <div id="obsoleteWarning" class="info-box obsolete-box" data-i18n="obsoleteWarning">
         <strong>⚠️ WARNING:</strong> You are viewing an obsolete version. Select the latest available release from the menu above for best performance.
@@ -167,14 +144,6 @@
     <div class="split-layout">
         
         <div class="left-col">
-            
-            <div class="form-group">
-                <label for="versionSelect" data-i18n="versionLabel">Firmware Version:</label>
-                <select id="versionSelect">
-                    <option value="" data-i18n="loadingVersions">Loading versions...</option>
-                </select>
-            </div>
-
             <div class="form-group">
                 <label for="deviceType" data-i18n="deviceLabel">1. Choose Device:</label>
                 <select id="deviceType" disabled>
@@ -201,39 +170,18 @@
 
         <div class="right-col">
             <div class="board-preview-container" id="boardPreviewBox">
-                
-                <div id="boardPlaceholder" class="placeholder-content">
-                    <svg viewBox="0 0 100 100" width="80" height="80" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="18" y="25" width="10" height="4" fill="#666" rx="1"/>
-                        <rect x="18" y="36" width="10" height="4" fill="#666" rx="1"/>
-                        <rect x="18" y="47" width="10" height="4" fill="#666" rx="1"/>
-                        <rect x="18" y="58" width="10" height="4" fill="#666" rx="1"/>
-                        <rect x="18" y="69" width="10" height="4" fill="#666" rx="1"/>
-                        <rect x="72" y="25" width="10" height="4" fill="#666" rx="1"/>
-                        <rect x="72" y="36" width="10" height="4" fill="#666" rx="1"/>
-                        <rect x="72" y="47" width="10" height="4" fill="#666" rx="1"/>
-                        <rect x="72" y="58" width="10" height="4" fill="#666" rx="1"/>
-                        <rect x="72" y="69" width="10" height="4" fill="#666" rx="1"/>
-                        <rect x="25" y="15" width="50" height="70" fill="#2a2a2a" stroke="#444" stroke-width="2" rx="4"/>
-                        <rect x="36" y="38" width="28" height="28" fill="#151515" rx="2"/>
-                        <circle cx="33" cy="24" r="3" fill="#555"/>
-                        <path d="M38 72 L62 72" stroke="#444" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                    <span data-i18n="boardPlaceholder">-- Select a board --</span>
-                </div>
+                <img id="boardImage" src="" alt="Board Scheme" onerror="this.parentElement.style.display='none'">
+            </div>
 
-                <img id="boardImage" src="" alt="Board Scheme" onerror="this.style.display='none'; document.getElementById('boardPlaceholder').style.display='flex';">
+            <div class="info-box warning-box" id="instructionsBox" data-i18n="instructions">
+                <strong>⚡ Important Instructions:</strong><br>
+                1. Use a good quality data USB cable.<br>
+                2. Click Flash and select the port from the popup.<br>
+                3. If the board doesn't connect, <b>hold down the physical BOOT button</b> on the ESP32 while clicking.
             </div>
         </div>
 
     </div>
-    <div class="info-box warning-box" id="instructionsBox" data-i18n="instructions">
-        <strong>⚡ Important Instructions:</strong><br>
-        1. Use a good quality data USB cable.<br>
-        2. Click Flash and select the port from the popup.<br>
-        3. If the board doesn't connect, <b>hold down the physical BOOT button</b> on the ESP32 while clicking.
-    </div>
-
     <button id="flashBtn" disabled data-i18n="btnFlash">FLASH FIRMWARE</button>
 
     <div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
@@ -302,8 +250,7 @@
             hardResetLog: "Performing Hard Reset (Pulse EN)...",
             resetWarnLog: "Warning: Automatic reset not supported by the system.",
             unavailableRelease: " (Missing files)",
-            portClosedLog: "Serial port closed. Device is ready!",
-            boardPlaceholder: "-- Select a board --"
+            portClosedLog: "Serial port closed. Device is ready!"
         },
         it: {
             title: "OpenFIRE ESP32 Flasher",
@@ -363,8 +310,7 @@
             hardResetLog: "Esecuzione Hard Reset (Pulse EN)...",
             resetWarnLog: "Avviso: Reset automatico non supportato dal sistema.",
             unavailableRelease: " (File mancanti)",
-            portClosedLog: "Porta seriale chiusa. Il dispositivo è pronto!",
-            boardPlaceholder: "-- Seleziona una scheda --"
+            portClosedLog: "Porta seriale chiusa. Il dispositivo è pronto!"
         }
     };
 
@@ -632,8 +578,8 @@
         const fsGroup = document.getElementById('fsGroup');
         const fsSelect = document.getElementById('fsType');
         const flashBtn = document.getElementById('flashBtn');
+        const boardPreviewBox = document.getElementById('boardPreviewBox');
         const boardImage = document.getElementById('boardImage');
-        const boardPlaceholder = document.getElementById('boardPlaceholder'); // NUOVO RIFERIMENTO
 
         vSelect.addEventListener('change', (e) => {
             targetTag = vSelect.options[vSelect.selectedIndex].value;
@@ -661,11 +607,7 @@
             boardSelect.innerHTML = `<option value="" data-i18n="selectBoard">${t('selectBoard')}</option>`;
             boardGroup.style.display = dev ? 'block' : 'none';
             fsGroup.style.display = (dev === 'LIGHTGUN') ? 'block' : 'none';
-            
-            // Invece di nascondere il box, ripristiniamo il placeholder
-            boardImage.style.display = 'none';
-            boardPlaceholder.style.display = 'flex';
-            
+            boardPreviewBox.style.display = 'none';
             flashBtn.disabled = true;
 
             // Verifica se il manifest ha la lista per il dispositivo selezionato
@@ -708,15 +650,12 @@
                 const boardObj = boards[currentDev].find(b => b.id === selectedBoardId);
                 if (boardObj && boardObj.img) {
                     boardImage.src = IMG_BASE_URL + boardObj.img;
-                    boardImage.style.display = 'block';
-                    boardPlaceholder.style.display = 'none';
+                    boardPreviewBox.style.display = 'block';
                 } else {
-                    boardImage.style.display = 'none';
-                    boardPlaceholder.style.display = 'flex';
+                    boardPreviewBox.style.display = 'none';
                 }
             } else {
-                boardImage.style.display = 'none';
-                boardPlaceholder.style.display = 'flex';
+                boardPreviewBox.style.display = 'none';
             }
             checkReady();
         });
