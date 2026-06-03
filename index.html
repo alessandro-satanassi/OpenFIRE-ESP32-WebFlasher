@@ -46,13 +46,16 @@
         /* --- LAYOUT A COLONNE (PERCENTUALI) --- */
         .split-layout {
             display: grid;
-            grid-template-columns: 65% 25%; 
+            /* Somma = 97%. Lascia esattamente un 3% di spazio vuoto (gap) in mezzo */
+            grid-template-columns: 71% 26%; 
             justify-content: space-between;
             margin-bottom: 10px; 
             align-items: stretch; /* Allinea perfettamente le altezze */
         }
         
+        /* TRUCCO CSS GRID: min-height: 0 impedisce all'immagine di forzare e dilatare la riga */
         .right-col {
+            min-height: 0; 
             height: 100%;
         }
 
