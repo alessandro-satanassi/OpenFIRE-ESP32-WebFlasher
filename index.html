@@ -468,7 +468,7 @@
                 // 4. POPOLA L'INTERFACCIA
                 populateVersionSelect();
                 updateActiveReleaseData();
-                document.getElementById('deviceType').disabled = false;
+                //document.getElementById('deviceType').disabled = false;
             } else {
                 const vSelect = document.getElementById('versionSelect');
                 vSelect.innerHTML = `<option data-i18n="noReleaseFound">${t('noReleaseFound')}</option>`;
@@ -524,10 +524,20 @@
 
     function updateActiveReleaseData() {
         const selectedRelease = allReleases.find(r => r.tag_name === targetTag);
+        const devSelect = document.getElementById('deviceType');
+
         if (selectedRelease && selectedRelease.manifest) {
             activeManifest = selectedRelease.manifest;
+            // Se la cartella è valida, sblocca il menu dispositivi
+            if (devSelect) devSelect.disabled = false; 
         } else {
             activeManifest = null;
+            // Se la cartella è vuota (niente manifest), chiudi tutto
+            if (devSelect) {
+                devSelect.value = ""; // Azzera la scelta
+                devSelect.disabled = true; // Rende il menu grigino e non cliccabile
+                devSelect.dispatchEvent(new Event('change')); // Forza il reset delle schede e del tasto Flash
+            }
         }
     }
 
@@ -553,6 +563,7 @@
         const boardPreviewBox = document.getElementById('boardPreviewBox');
         const boardImage = document.getElementById('boardImage');
 
+        // POPOLAMENTO MENU VERSIONE
         vSelect.addEventListener('change', (e) => {
             targetTag = vSelect.options[vSelect.selectedIndex].value;
 
@@ -561,8 +572,14 @@
             window.history.replaceState({}, '', url);
 
             checkObsoleteWarning();
+            
+            // Questa funzione ora si occupa anche di abilitare/disabilitare il menu Dispositivo
             updateActiveReleaseData();
-            if (devSelect.value !== "") devSelect.dispatchEvent(new Event('change'));
+            
+            // Se il menu dispositivo è rimasto attivo e ha un valore, aggiorna le schede
+            if (!devSelect.disabled && devSelect.value !== "") {
+                devSelect.dispatchEvent(new Event('change'));
+            }
         });
 
         // POPOLAMENTO SCHEDE TRAMITE MANIFEST (Istantaneo e sincrono)
