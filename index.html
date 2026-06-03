@@ -43,13 +43,13 @@
             box-sizing: border-box; 
         }
         
-        /* --- LAYOUT A COLONNE SBILANCIATO (Come da Schizzo) --- */
+        /* --- LAYOUT A COLONNE SBILANCIATO --- */
         .split-layout {
             display: grid;
-            /* La colonna di sinistra è 1.4 volte più larga di quella di destra */
-            grid-template-columns: 1.4fr 1fr;
+            /* Colonna destra ridotta di circa il 40% rispetto al 1.4fr precedente */
+            grid-template-columns: 2.2fr 1fr; 
             gap: 40px;
-            margin-bottom: 25px;
+            margin-bottom: 10px; /* Spazio ridotto perché c'è il menu fsType sotto */
             align-items: start;
         }
 
@@ -89,7 +89,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 280px; /* Mantiene l'altezza anche da vuoto */
+            min-height: 220px; /* Abbassato proporzionalmente alla nuova larghezza */
             height: 100%;
             box-sizing: border-box;
         }
@@ -114,7 +114,7 @@
         }
         .warning-box {
             background-color: rgba(211, 47, 47, 0.1); border-left: 4px solid var(--danger);
-            margin-bottom: 25px; /* Spazio prima del bottone */
+            margin-bottom: 25px; 
         }
         .obsolete-box {
             background-color: rgba(255, 152, 0, 0.1); border-left: 4px solid var(--warning); 
@@ -141,7 +141,6 @@
         }
         .progress-fill { height: 100%; background-color: var(--success); width: 0%; transition: width 0.2s; }
         
-        /* Responsive fallback per schermi piccoli (es. ridimensionamento finestra) */
         @media (max-width: 768px) {
             .split-layout { grid-template-columns: 1fr; }
             .board-preview-container { min-height: 150px; }
@@ -185,17 +184,9 @@
                 </select>
             </div>
 
-            <div class="form-group" id="boardGroup" style="display: none;">
+            <div class="form-group" id="boardGroup" style="display: none; margin-bottom: 0;">
                 <label for="boardType" data-i18n="boardLabel">2. Choose your Board (ESP32-S3):</label>
                 <select id="boardType"></select>
-            </div>
-
-            <div class="form-group" id="fsGroup" style="display: none;">
-                <label for="fsType" data-i18n="fsLabel">3. Installation Type (Lightgun):</label>
-                <select id="fsType">
-                    <option value="NoFS" data-i18n="fsBase">Base Update (Keeps Calibrations)</option>
-                    <option value="Full" data-i18n="fsClean">Clean Install (Erases Everything)</option>
-                </select>
             </div>
         </div>
 
@@ -225,8 +216,15 @@
                 <img id="boardImage" src="" alt="Board Scheme" onerror="this.style.display='none'; document.getElementById('boardPlaceholder').style.display='flex';">
             </div>
         </div>
-
     </div>
+    <div class="form-group" id="fsGroup" style="display: none; margin-bottom: 25px;">
+        <label for="fsType" data-i18n="fsLabel">3. Installation Type (Lightgun):</label>
+        <select id="fsType">
+            <option value="NoFS" data-i18n="fsBase">Base Update (Keeps Calibrations)</option>
+            <option value="Full" data-i18n="fsClean">Clean Install (Erases Everything)</option>
+        </select>
+    </div>
+
     <div class="info-box warning-box" id="instructionsBox" data-i18n="instructions">
         <strong>⚡ Important Instructions:</strong><br>
         1. Use a good quality data USB cable.<br>
@@ -303,7 +301,7 @@
             resetWarnLog: "Warning: Automatic reset not supported by the system.",
             unavailableRelease: " (Missing files)",
             portClosedLog: "Serial port closed. Device is ready!",
-            boardPlaceholder: "-- Select a board --"
+            boardPlaceholder: "- Select a board -"
         },
         it: {
             title: "OpenFIRE ESP32 Flasher",
@@ -364,7 +362,7 @@
             resetWarnLog: "Avviso: Reset automatico non supportato dal sistema.",
             unavailableRelease: " (File mancanti)",
             portClosedLog: "Porta seriale chiusa. Il dispositivo è pronto!",
-            boardPlaceholder: "-- Seleziona una scheda --"
+            boardPlaceholder: "- Seleziona una scheda -"
         }
     };
 
