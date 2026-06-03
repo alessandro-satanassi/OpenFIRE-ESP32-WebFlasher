@@ -230,6 +230,7 @@
             portSelectedLog: "Port selected successfully.",
             hardResetLog: "Performing Hard Reset (Pulse EN)...",
             resetWarnLog: "Warning: Automatic reset not supported by the system.",
+            unavailableRelease: " (Missing files)",
             portClosedLog: "Serial port closed. Device is ready!"
         },
         it: {
@@ -289,6 +290,7 @@
             portSelectedLog: "Porta selezionata correttamente.",
             hardResetLog: "Esecuzione Hard Reset (Pulse EN)...",
             resetWarnLog: "Avviso: Reset automatico non supportato dal sistema.",
+            unavailableRelease: " (File mancanti)",
             portClosedLog: "Porta seriale chiusa. Il dispositivo è pronto!"
         }
     };
@@ -413,6 +415,7 @@
 
             const releases = await response.json();
             
+            /*
             if (releases.length > 0) {
                 allReleases = releases.slice(0, 10);
                 latestGlobalTag = allReleases[0].tag_name;
@@ -437,6 +440,75 @@
                 updateActiveReleaseData();
                 document.getElementById('deviceType').disabled = false;
             } else {
+            */    
+            if (releases.length > 0) {
+                allReleases = releases.slice(0, 10);
+                latestGlobalTag = allReleases[0].tag_name;
+
+                // 1. INIETTA L'UNDICESIMA VERSIONE SE NECESSARIO
+                if (requestedTag) {
+                    const found = allReleases.some(r => r.tag_name === requestedTag);
+                    if (!found) {
+                        const oldRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/tags/${requestedTag}`);
+                        if (oldRes.ok) {
+                            const oldRelease = await oldRes.json();
+                            allReleases.push(oldRelease); 
+                        } else {
+                            requestedTag = latestGlobalTag; 
+                        }
+                    }
+                    targetTag = requestedTag;
+                } else {
+                    targetTag = latestGlobalTag;
+                }
+
+                // 2. CONTROLLA L'ESISTENZA DEI FILE PER TUTTE LE VERSIONI IN LISTA
+                const availabilityChecks = allReleases.map(async (r) => {
+                    if (!r.assets || r.assets.length === 0) {
+                        r.isLocallyAvailable = false;
+                        return;
+                    }
+                    
+                    // Prende solo gli asset che sono file firmware (.bin)
+                    const binAssets = r.assets.filter(a => a.name.endsWith('.bin'));
+                    if (binAssets.length === 0) {
+                        r.isLocallyAvailable = false;
+                        return;
+                    }
+
+                    // Creiamo un test HEAD per ogni singolo file .bin di quella versione
+                    const assetChecks = binAssets.map(async (asset) => {
+                        const testUrl = `firmware/${r.tag_name}/${asset.name}`;
+                        const res = await fetch(testUrl, { method: 'HEAD', cache: 'no-cache' });
+                        if (res.ok) return true;
+                        throw new Error("Mancante"); // Lancia errore se è 404
+                    });
+
+                    try {
+                        // LA MAGIA: Promise.any dà esito positivo appena UN file viene trovato!
+                        await Promise.any(assetChecks);
+                        r.isLocallyAvailable = true;
+                    } catch (e) {
+                        // Se TUTTI i file danno 404, allora la versione è considerata vuota.
+                        r.isLocallyAvailable = false;
+                    }
+                });
+
+                // 3. SICUREZZA
+                const firstAvailable = allReleases.find(r => r.isLocallyAvailable);
+                const selectedRel = allReleases.find(r => r.tag_name === targetTag);
+                
+                if (selectedRel && !selectedRel.isLocallyAvailable) {
+                    // Se la versione scelta dal link non ha file, scala sulla prima funzionante.
+                    // Se proprio nessuna ha file, resta sul latestGlobalTag per non rompere l'UI.
+                    targetTag = firstAvailable ? firstAvailable.tag_name : latestGlobalTag;
+                }
+
+                // 4. POPOLA L'INTERFACCIA
+                populateVersionSelect();
+                updateActiveReleaseData();
+                document.getElementById('deviceType').disabled = false;
+            } else {
                 const vSelect = document.getElementById('versionSelect');
                 vSelect.innerHTML = `<option data-i18n="noReleaseFound">${t('noReleaseFound')}</option>`;
                 vSelect.disabled = true;
@@ -457,6 +529,7 @@
         setupUI();
     }
 
+    /*
     function populateVersionSelect() {
         if(allReleases.length === 0) return;
         const vSelect = document.getElementById('versionSelect');
@@ -472,6 +545,41 @@
         
         checkObsoleteWarning();
     }
+    */
+
+function populateVersionSelect() {
+        if(allReleases.length === 0) return;
+        const vSelect = document.getElementById('versionSelect');
+        vSelect.innerHTML = "";
+        
+        allReleases.forEach(r => {
+            const opt = document.createElement('option');
+            opt.setAttribute('value', r.tag_name);
+            
+            let label = r.tag_name + (r.prerelease ? t('prerelease') : t('stable'));
+
+            if (r.isLocallyAvailable) {
+                // La cartella esiste, l'opzione è normale
+                opt.innerText = label;
+            } else {
+                // La cartella NON esiste, l'opzione è grigia e bloccata
+                opt.innerText = label + t('unavailableRelease');
+                opt.disabled = true;
+                opt.style.color = "#777777"; 
+                opt.style.fontStyle = "italic";
+            }
+
+            // L'assegnazione della selezione è spostata QUI FUORI.
+            // Garantisce che il menu mostri sempre il targetTag corretto.
+            if (r.tag_name === targetTag) {
+                opt.selected = true;
+            }
+
+            vSelect.appendChild(opt);
+        });
+        
+        checkObsoleteWarning();
+    }    
 
     function updateActiveReleaseData() {
         const selectedRelease = allReleases.find(r => r.tag_name === targetTag);
@@ -516,6 +624,7 @@
             if (devSelect.value !== "") devSelect.dispatchEvent(new Event('change'));
         });
 
+        /*
         devSelect.addEventListener('change', (e) => {
             const dev = e.target.value;
             const previousBoard = boardSelect.value; 
@@ -556,6 +665,99 @@
             }
             checkReady(); 
         });
+        */
+
+        devSelect.addEventListener('change', async (e) => {
+            const dev = e.target.value;
+            const previousBoard = boardSelect.value; 
+            const currentTargetTag = targetTag; // <-- TIMBRO DELLA VERSIONE
+            
+            boardSelect.innerHTML = `<option value="" data-i18n="selectBoard">${t('selectBoard')}</option>`;
+            boardGroup.style.display = dev ? 'block' : 'none';
+            fsGroup.style.display = (dev === 'LIGHTGUN') ? 'block' : 'none';
+            boardPreviewBox.style.display = 'none';
+            flashBtn.disabled = true;
+
+            if (dev && boards[dev]) {
+                const schedePotenziali = boards[dev].filter(b => {
+                    if (dev === 'LIGHTGUN') {
+                        return currentAssets.includes(`OpenFIRE-LIGHTGUN-NoFS-${b.id}.bin`) || 
+                               currentAssets.includes(`OpenFIRE-LIGHTGUN-${b.id}.bin`);
+                    } else {
+                        return currentAssets.includes(`OpenFIRE-${dev}-${b.id}.bin`);
+                    }
+                });
+
+                if (schedePotenziali.length > 0) {
+                    boardSelect.disabled = true;
+                    const defaultOpt = boardSelect.options[0];
+                    const origText = defaultOpt.innerText;
+                    defaultOpt.innerText = "Verifica disponibilità...";
+
+                    const boardChecks = schedePotenziali.map(async (b) => {
+                        b.isLocallyAvailable = false;
+                        let fileNamesToCheck = [];
+                        
+                        if (dev === 'LIGHTGUN') {
+                            fileNamesToCheck.push(`OpenFIRE-LIGHTGUN-NoFS-${b.id}.bin`);
+                            fileNamesToCheck.push(`OpenFIRE-LIGHTGUN-${b.id}.bin`);
+                        } else {
+                            fileNamesToCheck.push(`OpenFIRE-${dev}-${b.id}.bin`);
+                        }
+
+                        const fileChecks = fileNamesToCheck.map(async (fName) => {
+                            const testUrl = `firmware/${targetTag}/${fName}`;
+                            const res = await fetch(testUrl, { method: 'HEAD', cache: 'no-cache' });
+                            if (res.ok) return true;
+                            throw new Error("Missing");
+                        });
+
+                        try {
+                            await Promise.any(fileChecks);
+                            b.isLocallyAvailable = true;
+                        } catch(e) {
+                            b.isLocallyAvailable = false;
+                        }
+                    });
+
+                    await Promise.all(boardChecks);
+                    
+                    // --- CONTROLLO ANTI-RACE CONDITION DOPPIO ---
+                    // Ignora i risultati se nel frattempo l'utente ha cambiato dispositivo o versione!
+                    if (devSelect.value !== dev || targetTag !== currentTargetTag) return;
+
+                    defaultOpt.innerText = origText;
+                    boardSelect.disabled = false;
+
+                    schedePotenziali.forEach(b => {
+                        const opt = document.createElement('option');
+                        opt.value = b.id;
+                        
+                        if (b.isLocallyAvailable) {
+                            opt.innerText = b.name;
+                        } else {
+                            opt.innerText = b.name + t('unavailableRelease');
+                            opt.disabled = true;
+                            opt.style.color = "#777777";
+                            opt.style.fontStyle = "italic";
+                        }
+                        
+                        boardSelect.appendChild(opt);
+                    });
+                    
+                    if (previousBoard) {
+                        const matchedOpt = Array.from(boardSelect.options).find(o => o.value === previousBoard && !o.disabled);
+                        if (matchedOpt) {
+                            boardSelect.value = previousBoard;
+                            boardSelect.dispatchEvent(new Event('change'));
+                        }
+                    }
+                } else {
+                    boardSelect.innerHTML = `<option value="" data-i18n="noFirmware">${t('noFirmware')}</option>`;
+                }
+            }
+            checkReady(); 
+        });
 
         boardSelect.addEventListener('change', (e) => {
             const selectedBoardId = e.target.value;
@@ -577,6 +779,7 @@
 
         fsSelect.addEventListener('change', () => { checkReady(); });
 
+        /*
         function checkReady() {
             const dev = devSelect.value;
             const board = boardSelect.value;
@@ -597,9 +800,60 @@
             flashBtn.innerHTML = t(flashBtn.getAttribute('data-i18n'));
             flashBtn.disabled = !isReady;
         }
+        */
+        async function checkReady() {
+            flashBtn.disabled = true;
+            
+            const dev = devSelect.value;
+            const board = boardSelect.value;
+            const currentTargetTag = targetTag; // <-- TIMBRO DELLA VERSIONE
+
+            // Se l'utente non ha compilato i menu, tieni il tasto "neutro" e spegnilo
+            if (dev === "" || board === "") {
+                const currentFileName = (devSelect.value !== "" && boardSelect.value !== "") ? buildFileName() : null;
+                if (targetTag !== currentTargetTag) return;
+                
+                flashBtn.setAttribute('data-i18n', 'btnFlash');
+                flashBtn.innerHTML = t('btnFlash');
+                return; 
+            }
+
+            // Menu compilati, inizio il controllo chirurgico
+            const initialFileName = buildFileName();
+            let fileExists = true;
+
+            if (!currentAssets.includes(initialFileName)) {
+                fileExists = false;
+            } else {
+                try {
+                    const testUrl = `firmware/${targetTag}/${initialFileName}`;
+                    const res = await fetch(testUrl, { method: 'HEAD', cache: 'no-cache' });
+                    if (!res.ok) fileExists = false; 
+                } catch(e) {
+                    fileExists = false;
+                }
+            }
+            
+            // --- CONTROLLO ANTI-RACE CONDITION DOPPIO ---
+            const currentFileName = (devSelect.value !== "" && boardSelect.value !== "") ? buildFileName() : null;
+            if (initialFileName !== currentFileName || targetTag !== currentTargetTag) return;
+            
+            // Applica l'esito al pulsante
+            if (fileExists) {
+                flashBtn.setAttribute('data-i18n', 'btnFlash');
+                flashBtn.disabled = false;
+            } else {
+                flashBtn.setAttribute('data-i18n', 'btnUnavailable');
+                flashBtn.disabled = true;
+            }
+            
+            flashBtn.innerHTML = t(flashBtn.getAttribute('data-i18n'));
+        }
 
         flashBtn.addEventListener('click', startFlashing);
     }
+    
+
 
     function buildFileName() {
         const dev = document.getElementById('deviceType').value;
