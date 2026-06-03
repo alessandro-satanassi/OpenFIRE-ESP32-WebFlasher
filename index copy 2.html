@@ -27,15 +27,15 @@
             background-color: var(--bg-color);
             color: var(--text-main);
             margin: 0;
-            padding: 40px 20px; /* Più spazio sopra e sotto */
+            padding: 20px;
             display: flex;
             justify-content: center;
         }
         .container {
             background-color: var(--panel-bg);
-            max-width: 950px; /* <--- Aumentato per PC Desktop */
+            max-width: 600px;
             width: 100%;
-            padding: 40px;
+            padding: 30px;
             border-radius: 10px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.5);
             border: 1px solid var(--border);
@@ -43,15 +43,6 @@
             box-sizing: border-box; 
         }
         
-        /* --- NUOVO LAYOUT A COLONNE --- */
-        .split-layout {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-            margin-bottom: 25px;
-            align-items: start;
-        }
-
         .lang-switcher {
             position: absolute;
             top: 20px;
@@ -67,53 +58,50 @@
             width: auto;
         }
 
-        h1 { margin-top: 0; color: var(--accent); font-size: 26px; text-align: left; margin-bottom: 25px; }
+        h1 { margin-top: 0; color: var(--accent); font-size: 24px; text-align: left; margin-bottom: 25px; }
         .form-group { margin-bottom: 20px; }
         label { display: block; margin-bottom: 8px; font-weight: bold; color: var(--text-muted); }
         select {
-            width: 100%; padding: 12px; border-radius: 5px; border: 1px solid var(--border);
+            width: 100%; padding: 10px; border-radius: 5px; border: 1px solid var(--border);
             background-color: #2a2a2a; color: var(--text-main); font-size: 16px;
         }
         select:focus { outline: none; border-color: var(--accent); }
         select:disabled { background-color: #333; color: #777; cursor: not-allowed; }
         
         .board-preview-container {
-            text-align: center; 
-            padding: 20px;
+            text-align: center; margin-top: 15px; padding: 15px;
             background-color: #171717; border: 1px dashed var(--border);
             border-radius: 8px; display: none;
-            margin-bottom: 20px;
         }
-        .board-preview-container img { max-width: 100%; height: auto; max-height: 250px; } /* Immagine più grande */
+        .board-preview-container img { max-width: 100%; height: auto; max-height: 180px; }
 
         .info-box {
-            padding: 15px; font-size: 14px; line-height: 1.5; border-radius: 5px;
+            padding: 15px; margin-bottom: 20px; font-size: 14px; line-height: 1.5; border-radius: 5px;
         }
         .warning-box {
             background-color: rgba(211, 47, 47, 0.1); border-left: 4px solid var(--danger);
         }
         .obsolete-box {
-            background-color: rgba(255, 152, 0, 0.1); border-left: 4px solid var(--warning); 
-            display: none; margin-bottom: 20px;
+            background-color: rgba(255, 152, 0, 0.1); border-left: 4px solid var(--warning); display: none;
         }
 
         button {
-            width: 100%; padding: 18px; font-size: 20px; font-weight: bold; letter-spacing: 1px;
+            width: 100%; padding: 15px; font-size: 18px; font-weight: bold;
             background-color: var(--accent); color: white; border: none;
             border-radius: 5px; cursor: pointer; transition: background 0.3s;
         }
         button:hover:not(:disabled) { background-color: var(--accent-hover); }
-        button:disabled { background-color: #555; cursor: not-allowed; color: #999;}
+        button:disabled { background-color: #555; cursor: not-allowed; }
         
         #log-area {
-            width: 100%; height: 220px; background-color: #000; color: #0f0; /* Altezza aumentata */
-            font-family: monospace; font-size: 13px; padding: 15px; border-radius: 5px;
+            width: 100%; height: 150px; background-color: #000; color: #0f0;
+            font-family: monospace; font-size: 12px; padding: 10px; border-radius: 5px;
             border: 1px solid var(--border); overflow-y: auto; margin-top: 20px;
             box-sizing: border-box; display: none;
         }
         .progress-bar {
             width: 100%; height: 20px; background-color: #333;
-            border-radius: 10px; overflow: hidden; margin-top: 15px; display: none;
+            border-radius: 10px; overflow: hidden; margin-top: 10px; display: none;
         }
         .progress-fill { height: 100%; background-color: var(--success); width: 0%; transition: width 0.2s; }
     </style>
@@ -141,51 +129,44 @@
         <strong>⚠️ WARNING:</strong> You are viewing an obsolete version. Select the latest available release from the menu above for best performance.
     </div>
 
-    <div class="split-layout">
-        
-        <div class="left-col">
-            <div class="form-group">
-                <label for="deviceType" data-i18n="deviceLabel">1. Choose Device:</label>
-                <select id="deviceType" disabled>
-                    <option value="" data-i18n="selectDevice">-- Select --</option>
-                    <option value="LIGHTGUN">Lightgun</option>
-                    <option value="DONGLE">Dongle</option>
-                    <option value="PEDAL">Pedal</option>
-                </select>
-            </div>
-
-            <div class="form-group" id="boardGroup" style="display: none;">
-                <label for="boardType" data-i18n="boardLabel">2. Choose your Board (ESP32-S3):</label>
-                <select id="boardType"></select>
-            </div>
-
-            <div class="form-group" id="fsGroup" style="display: none;">
-                <label for="fsType" data-i18n="fsLabel">3. Installation Type (Lightgun):</label>
-                <select id="fsType">
-                    <option value="NoFS" data-i18n="fsBase">Base Update (Keeps Calibrations)</option>
-                    <option value="Full" data-i18n="fsClean">Clean Install (Erases Everything)</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="right-col">
-            <div class="board-preview-container" id="boardPreviewBox">
-                <img id="boardImage" src="" alt="Board Scheme" onerror="this.parentElement.style.display='none'">
-            </div>
-
-            <div class="info-box warning-box" id="instructionsBox" data-i18n="instructions">
-                <strong>⚡ Important Instructions:</strong><br>
-                1. Use a good quality data USB cable.<br>
-                2. Click Flash and select the port from the popup.<br>
-                3. If the board doesn't connect, <b>hold down the physical BOOT button</b> on the ESP32 while clicking.
-            </div>
-        </div>
-
+    <div class="form-group">
+        <label for="deviceType" data-i18n="deviceLabel">1. Choose Device:</label>
+        <select id="deviceType" disabled>
+            <option value="" data-i18n="selectDevice">-- Select --</option>
+            <option value="LIGHTGUN">Lightgun</option>
+            <option value="DONGLE">Dongle</option>
+            <option value="PEDAL">Pedal</option>
+        </select>
     </div>
+
+    <div class="form-group" id="boardGroup" style="display: none;">
+        <label for="boardType" data-i18n="boardLabel">2. Choose your Board (ESP32-S3):</label>
+        <select id="boardType"></select>
+        
+        <div class="board-preview-container" id="boardPreviewBox">
+            <img id="boardImage" src="" alt="Board Scheme" onerror="this.parentElement.style.display='none'">
+        </div>
+    </div>
+
+    <div class="form-group" id="fsGroup" style="display: none;">
+        <label for="fsType" data-i18n="fsLabel">3. Installation Type (Lightgun):</label>
+        <select id="fsType">
+            <option value="NoFS" data-i18n="fsBase">Base Update (Keeps Calibrations)</option>
+            <option value="Full" data-i18n="fsClean">Clean Install (Erases Everything)</option>
+        </select>
+    </div>
+
+    <div class="info-box warning-box" id="instructionsBox" data-i18n="instructions">
+        <strong>⚡ Important Instructions:</strong><br>
+        1. Use a good quality data USB cable.<br>
+        2. Click Flash and select the port from the popup.<br>
+        3. If the board doesn't connect, <b>hold down the physical BOOT button</b> on the ESP32 while clicking.
+    </div>
+
     <button id="flashBtn" disabled data-i18n="btnFlash">FLASH FIRMWARE</button>
 
     <div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
-    <div id="progressText" style="text-align: center; margin-top: 8px; font-weight: bold; font-size: 14px; color: var(--text-muted);"></div>
+    <div id="progressText" style="text-align: center; margin-top: 5px; font-size: 14px; color: var(--text-muted);"></div>
     <textarea id="log-area" readonly></textarea>
 </div>
 
@@ -487,6 +468,7 @@
                 // 4. POPOLA L'INTERFACCIA
                 populateVersionSelect();
                 updateActiveReleaseData();
+                //document.getElementById('deviceType').disabled = false;
             } else {
                 const vSelect = document.getElementById('versionSelect');
                 vSelect.innerHTML = `<option data-i18n="noReleaseFound">${t('noReleaseFound')}</option>`;
@@ -581,6 +563,7 @@
         const boardPreviewBox = document.getElementById('boardPreviewBox');
         const boardImage = document.getElementById('boardImage');
 
+        // POPOLAMENTO MENU VERSIONE
         vSelect.addEventListener('change', (e) => {
             targetTag = vSelect.options[vSelect.selectedIndex].value;
 
