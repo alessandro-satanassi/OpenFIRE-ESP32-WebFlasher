@@ -220,7 +220,12 @@
             errGestureLog: "❌ BROWSER SECURITY ERROR: User gesture required.",
             errGestureUI: "Browser Error. Please reload the page.",
             errUnknown: "❌ ERROR:",
-            errUI: "Error during operation."
+            errUI: "Error during operation.",
+            openPortLog: "Opening secure port selection...",
+            portSelectedLog: "Port selected successfully.",
+            hardResetLog: "Performing Hard Reset (Pulse EN)...",
+            resetWarnLog: "Warning: Automatic reset not supported by the system.",
+            portClosedLog: "Serial port closed. Device is ready!"
         },
         it: {
             title: "OpenFIRE ESP32 Flasher",
@@ -274,7 +279,12 @@
             errGestureLog: "❌ ERRORE DI SICUREZZA BROWSER: Azione utente richiesta.",
             errGestureUI: "Errore Browser. Ricarica la pagina.",
             errUnknown: "❌ ERRORE:",
-            errUI: "Errore durante l'operazione."
+            errUI: "Errore durante l'operazione.",
+            openPortLog: "Apertura selezione porta sicura...",
+            portSelectedLog: "Porta selezionata correttamente.",
+            hardResetLog: "Esecuzione Hard Reset (Pulse EN)...",
+            resetWarnLog: "Avviso: Reset automatico non supportato dal sistema.",
+            portClosedLog: "Porta seriale chiusa. Il dispositivo è pronto!"
         }
     };
 
@@ -602,39 +612,7 @@
     function logMsg(msg) {
         const logArea = document.getElementById('log-area');
         logArea.style.display = 'block';
-        /*
-        // Mappa delle traduzioni per i messaggi fissi della libreria esptool
-        const esptoolTranslations = {
-            "esptool.js": "Driver esptool.js",
-            "Connecting...": "Connessione in corso...",
-            "Detecting chip type...": "Rilevamento tipo chip...",
-            "Uploading stub...": "Caricamento stub di comunicazione...",
-            "Running stub...": "Esecuzione stub...",
-            "Stub running...": "Stub in esecuzione...",
-            "Changing baudrate to 921600": "Impostazione baudrate a 921600",
-            "Changed": "Baudrate modificato",
-            "Flash ID:": "ID Flash:",
-            "Not changing the image": "Nessuna modifica all'immagine",
-            "Compressed": "Compresso",
-            "bytes to": "byte verso",
-            "Writing at": "Scrittura all'indirizzo",
-            "Wrote": "Scritto",
-            "at": "a",
-            "in": "in",
-            "seconds.": "secondi.",
-            "Leaving...": "Chiusura connessione...",
-            "Hard resetting via RTS pin...": "Reset hardware tramite pin RTS..."
-        };
-
-        // Applichiamo la traduzione se il messaggio esiste nella mappa
-        let translatedMsg = msg;
-        for (const [english, italian] of Object.entries(esptoolTranslations)) {
-            if (translatedMsg.includes(english)) {
-                translatedMsg = translatedMsg.replace(english, italian);
-            }
-        }
-        */
-        logArea.value += translatedMsg + '\n';
+        logArea.value += msg + '\n';
         logArea.scrollTop = logArea.scrollHeight;
     }
 
@@ -724,10 +702,12 @@
             
         let port;
         try {
-            logMsg("Apertura selezione porta sicura...");
+            //logMsg("Apertura selezione porta sicura...");
+            logMsg(t('openPortLog'));
             // Il popup si apre, ma mostra SOLO le schede compatibili
             port = await navigator.serial.requestPort({ filters: espFilters }); 
-            logMsg("Porta selezionata correttamente.");
+            //logMsg("Porta selezionata correttamente.");
+            logMsg(t('portSelectedLog'));
         } catch (e) {
             // Se l'utente clicca su "Annulla" nel popup
             throw new Error("No port selected"); 
@@ -764,35 +744,39 @@
                 terminal: {
                     clean: () => {},
                     writeLine: (data) => {
-                        // Traduciamo qui prima di passare a logMsg
                         let tradotto = data;
-                        const esptoolTranslations = {
-                            "Connecting...": "Connessione in corso...",
-                            "Detecting chip type...": "Rilevamento tipo chip...",
-                            "Uploading stub...": "Caricamento stub...",
-                            "Running stub...": "Esecuzione stub...",
-                            "Stub running...": "Stub in esecuzione...",
-                            "Changing baudrate to": "Modifica baudrate a",
-                            "Changed": "Baudrate modificato",
-                            "If the chip does not respond to any further commands, consider using a lower baud rate.": "Se il chip non risponde ai comandi successivi, prova a usare un baudrate inferiore.",
-                            "Flash ID:": "ID Flash:",
-                            "Not changing the image": "Nessuna modifica all'immagine",
-                            "Compressed": "Compresso",
-                            "bytes to": "byte verso",
-                            "Writing at": "Scrittura all'indirizzo",
-                            "Wrote": "Scritto",
-                            "at": "a",
-                            "in": "in",
-                            "seconds.": "secondi.",
-                            "Leaving...": "Chiusura connessione...",
-                            "Hard resetting via RTS pin...": "Reset hardware in corso..."
-                        };
+                        
+                        // Applica la traduzione SOLO se la lingua attuale è l'italiano
+                        if (currentLang === 'it') {
+                            const esptoolTranslations = {
+                                "Connecting...": "Connessione in corso...",
+                                "Detecting chip type...": "Rilevamento tipo chip...",
+                                "Uploading stub...": "Caricamento stub...",
+                                "Running stub...": "Esecuzione stub...",
+                                "Stub running...": "Stub in esecuzione...",
+                                "Changing baudrate to": "Modifica baudrate a",
+                                "Changed": "Baudrate modificato",
+                                "If the chip does not respond to any further commands, consider using a lower baud rate.": "Se il chip non risponde ai comandi successivi, prova a usare un baudrate inferiore.",
+                                "Flash ID:": "ID Flash:",
+                                "Not changing the image": "Nessuna modifica all'immagine",
+                                "Compressed": "Compresso",
+                                "bytes to": "byte verso",
+                                "Writing at": "Scrittura all'indirizzo",
+                                "Wrote": "Scritto",
+                                "at": "a",
+                                "in": "in",
+                                "seconds.": "secondi.",
+                                "Leaving...": "Chiusura connessione...",
+                                "Hard resetting via RTS pin...": "Reset hardware in corso..."
+                            };
 
-                        for (const [en, it] of Object.entries(esptoolTranslations)) {
-                            if (tradotto.includes(en)) tradotto = tradotto.replace(en, it);
+                            for (const [en, it] of Object.entries(esptoolTranslations)) {
+                                if (tradotto.includes(en)) tradotto = tradotto.replace(en, it);
+                            }
                         }
+                        
                         logMsg(tradotto);
-                    },
+                    },                    
                     write: (data) => { /* logMsg(data) */ } // write Line è sufficiente
                 }
             });
@@ -828,7 +812,8 @@
 
             // 4. RESET HARDWARE NATIVO (Segnali Simultanei)
             try {
-                logMsg("Esecuzione Hard Reset (Pulse EN)...");
+                //logMsg("Esecuzione Hard Reset (Pulse EN)...");
+                logMsg(t('hardResetLog'));
                 
                 // Passo 1: Invia DTR e RTS nello stesso esatto pacchetto USB.
                 // Questo tira a massa il pin EN (Reset) in modo pulito.
@@ -844,13 +829,15 @@
                 await new Promise(resolve => setTimeout(resolve, 1000)); 
                 
             } catch (resetErr) {
-                logMsg("Avviso: Reset automatico non supportato dal sistema.");
+                //logMsg("Avviso: Reset automatico non supportato dal sistema.");
+                logMsg(t('resetWarnLog'));
             }
 
             // 5. RILASCIO TOTALE DELLA PORTA
             if (transport) {
                 await transport.disconnect();
-                logMsg("Porta seriale chiusa. Il dispositivo è pronto!");
+                //logMsg("Porta seriale chiusa. Il dispositivo è pronto!");
+                logMsg(t('portClosedLog'));
             }            
                                
         } catch (error) {
