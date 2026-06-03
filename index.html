@@ -181,7 +181,7 @@
             fsLabel: "3. Installation Type (Lightgun):",
             fsBase: "Base Update (Keeps Calibrations)",
             fsClean: "Clean Install (Erases Everything)",
-            instructions: "<strong>⚡ Important Instructions:</strong><br>1. Use a good quality data USB cable.<br>2. Click Flash and select the port from the popup.<br>3. If the board doesn't connect, <b>hold down the physical BOOT button</b> on the ESP32 while clicking.",
+            instructions: "<strong>⚡ Important Instructions:</strong><br>1. Use a good data USB cable.<br>2. Click Flash and select the port.<br>3. If it doesn't connect: <b>Hold BOOT, click RESET, then release BOOT</b> (or unplug/replug USB while holding BOOT).",
             btnFlash: "FLASH FIRMWARE",
             btnUnavailable: "FILE UNAVAILABLE",
             prerelease: " (Pre-release)",
@@ -208,8 +208,8 @@
             errPortLockLog2: "💡 FIX: Close other programs using the serial port (e.g. Arduino IDE, 3D Slicer) or re-plug the USB cable.",
             errPortLockUI: "COM Port occupied.",
             errTimeoutLog1: "❌ ERROR: Failed to communicate with the board.",
-            errTimeoutLog2: "💡 FIX: Try again and make sure to hold down the BOOT button on the ESP32 until you see the percentage advancing.",
-            errTimeoutUI: "Connection error (Use BOOT button).",
+            errTimeoutLog2: "💡 FIX: Try again. If it fails, force Download mode: hold BOOT, click RESET, then release BOOT (or replug USB holding BOOT).",
+            errTimeoutUI: "Connection error (Use BOOT+RESET).",
             errReset: "⚠️ Could not reboot automatically. Please press the RESET/EN button or re-plug the USB cable.",
             err404Log: "❌ ERROR: File not found (404).",
             err404UI: "Error: Firmware file missing.",
@@ -240,7 +240,7 @@
             fsLabel: "3. Tipo di Installazione (Lightgun):",
             fsBase: "Aggiornamento Base (Mantiene Calibrazioni)",
             fsClean: "Installazione Pulita (Cancella Tutto)",
-            instructions: "<strong>⚡ Istruzioni Importanti:</strong><br>1. Usa un cavo USB dati di buona qualità.<br>2. Clicca su Flash e seleziona la porta dal popup.<br>3. Se la scheda non si connette, <b>tieni premuto il tasto fisico BOOT</b> sull'ESP32 mentre clicchi.",
+            instructions: "<strong>⚡ Istruzioni Importanti:</strong><br>1. Usa un cavo USB dati di buona qualità.<br>2. Clicca su Flash e seleziona la porta.<br>3. Se non si connette: <b>Tieni premuto BOOT, clicca RESET, poi rilascia BOOT</b> (oppure scollega/ricollega l'USB tenendo premuto BOOT).",
             btnFlash: "FLASH FIRMWARE",
             btnUnavailable: "FILE NON DISPONIBILE",
             prerelease: " (Pre-release)",
@@ -267,8 +267,8 @@
             errPortLockLog2: "💡 SOLUZIONE: Chiudi altri programmi che usano la seriale (es. Arduino IDE, Slicer 3D) o scollega e ricollega il cavo USB.",
             errPortLockUI: "Porta COM occupata.",
             errTimeoutLog1: "❌ ERRORE: Impossibile comunicare con la scheda.",
-            errTimeoutLog2: "💡 SOLUZIONE: Riprova e assicurati di tenere premuto il tasto BOOT sull'ESP32 finché non vedi avanzare la percentuale.",
-            errTimeoutUI: "Errore di connessione (Usa tasto BOOT).",
+            errTimeoutLog2: "💡 SOLUZIONE: Riprova. Se fallisce, forza la modalità Download: tieni premuto BOOT, clicca RESET, e rilascia BOOT (o ricollega l'USB tenendo premuto BOOT).",
+            errTimeoutUI: "Errore di connessione (Usa BOOT+RESET).",
             errReset: "⚠️ Impossibile riavviare in automatico. Premi il tasto RESET/EN o scollega e ricollega il cavo.",
             err404Log: "❌ ERRORE: File non trovato (404).",
             err404UI: "Errore: File firmware mancante.",
@@ -781,7 +781,7 @@
                 }
             });
 
-            logMsg(t('connChip'));
+            // logMsg(t('connChip')); // ?????????????????????????????
             
             // 2. Connessione al chip
             await esploader.main();
