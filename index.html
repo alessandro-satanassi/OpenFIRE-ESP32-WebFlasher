@@ -722,23 +722,16 @@
                 { usbVendorId: 0x2341, usbProductId: 0x0001 }  // Arduino Uno R3
             ];
             
-            // Recuperiamo le porte autorizzate e filtriamo quelle compatibili attualmente connesse
-            const allAuthorizedPorts = await navigator.serial.getPorts();
-            const availableAuthorizedPorts = allAuthorizedPorts.filter(p => {
-                const info = p.getInfo();
-                return espFilters.some(f => f.usbVendorId === info.usbVendorId && (!f.usbProductId || f.usbProductId === info.usbProductId));
-            });
-
-            let port;
-            if (availableAuthorizedPorts.length === 1) {
-                // Trovata una sola porta nota valida: connessione automatica
-                port = availableAuthorizedPorts[0];
-                logMsg("Porta nota rilevata. Connessione automatica...");
-            } else {
-                // Prima volta o conflitto: mostriamo il popup filtrato
-                port = await navigator.serial.requestPort({ filters: espFilters }); 
-            }
-            // ---------------------------------------------------------------        
+        let port;
+        try {
+            logMsg("Apertura selezione porta sicura...");
+            // Il popup si apre, ma mostra SOLO le schede compatibili
+            port = await navigator.serial.requestPort({ filters: espFilters }); 
+            logMsg("Porta selezionata correttamente.");
+        } catch (e) {
+            // Se l'utente clicca su "Annulla" nel popup
+            throw new Error("No port selected"); 
+        }
 
         if (!window.ESPLoader || !window.Transport) {
                 progressText.setAttribute('data-i18n', 'loadingDrivers');
@@ -764,19 +757,6 @@
             progressText.innerText = t('connChip');
             const transport = new window.Transport(port);
             
-            /*
-            // 1. Inizializzazione ESPLoader 
-            const esploader = new window.ESPLoader({
-                transport: transport,
-                baudrate: 921600,
-                terminal: {
-                    clean: () => {},
-                    writeLine: (data) => logMsg(data),
-                    write: (data) => logMsg(data)
-                }
-            });
-            */
-
             // 2. Connessione al chip
             const esploader = new window.ESPLoader({
                 transport: transport,
