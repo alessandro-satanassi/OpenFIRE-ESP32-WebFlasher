@@ -46,11 +46,11 @@
         /* --- LAYOUT A COLONNE SBILANCIATO --- */
         .split-layout {
             display: grid;
+            /* Colonna destra ridotta di circa il 40% rispetto al 1.4fr precedente */
             grid-template-columns: 2.2fr 1fr; 
             gap: 40px;
-            margin-bottom: 10px; 
-            /* STRETCH: Forza la colonna destra ad avere la stessa identica altezza della sinistra */
-            align-items: stretch; 
+            margin-bottom: 10px; /* Spazio ridotto perché c'è il menu fsType sotto */
+            align-items: start;
         }
 
         .lang-switcher {
@@ -89,13 +89,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            /* L'altezza segue la colonna di sinistra grazie ad align-items: stretch nel parent */
+            min-height: 220px; /* Abbassato proporzionalmente alla nuova larghezza */
             height: 100%;
             box-sizing: border-box;
         }
         .board-preview-container img { max-width: 100%; height: auto; max-height: 250px; display: none; }
         
-        /* --- PLACEHOLDER (CHIP ESP32 SVG AGGRESSIVO) --- */
+        /* --- PLACEHOLDER (CHIP ESP32 SVG) --- */
         .placeholder-content {
             display: flex;
             flex-direction: column;
@@ -106,8 +106,7 @@
         }
         .placeholder-content svg {
             margin-bottom: 15px;
-            opacity: 0.8;
-            filter: drop-shadow(0px 4px 8px rgba(0,0,0,0.5)); /* Ombra per profondità */
+            opacity: 0.6;
         }
 
         .info-box {
@@ -144,7 +143,7 @@
         
         @media (max-width: 768px) {
             .split-layout { grid-template-columns: 1fr; }
-            .board-preview-container { min-height: 180px; }
+            .board-preview-container { min-height: 150px; }
         }
     </style>
 </head>
@@ -195,57 +194,21 @@
             <div class="board-preview-container" id="boardPreviewBox">
                 
                 <div id="boardPlaceholder" class="placeholder-content">
-                    <svg viewBox="0 0 120 160" width="100" height="135" xmlns="http://www.w3.org/2000/svg">
-                        <defs>
-                            <linearGradient id="coreGlow" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stop-color="#2a2a2a" />
-                                <stop offset="100%" stop-color="#0a0a0a" />
-                            </linearGradient>
-                            <linearGradient id="fireGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                                <stop offset="0%" stop-color="#ff9800" />
-                                <stop offset="100%" stop-color="#d32f2f" />
-                            </linearGradient>
-                        </defs>
-
-                        <g fill="#888">
-                            <rect x="12" y="45" width="12" height="3" /><rect x="12" y="52" width="12" height="3" />
-                            <rect x="12" y="59" width="12" height="3" /><rect x="12" y="66" width="12" height="3" />
-                            <rect x="12" y="73" width="12" height="3" /><rect x="12" y="80" width="12" height="3" />
-                            <rect x="12" y="87" width="12" height="3" /><rect x="12" y="94" width="12" height="3" />
-                            <rect x="12" y="101" width="12" height="3" /><rect x="12" y="108" width="12" height="3" />
-                            <rect x="12" y="115" width="12" height="3" /><rect x="12" y="122" width="12" height="3" />
-                            <rect x="12" y="129" width="12" height="3" /><rect x="12" y="136" width="12" height="3" />
-                            <rect x="96" y="45" width="12" height="3" /><rect x="96" y="52" width="12" height="3" />
-                            <rect x="96" y="59" width="12" height="3" /><rect x="96" y="66" width="12" height="3" />
-                            <rect x="96" y="73" width="12" height="3" /><rect x="96" y="80" width="12" height="3" />
-                            <rect x="96" y="87" width="12" height="3" /><rect x="96" y="94" width="12" height="3" />
-                            <rect x="96" y="101" width="12" height="3" /><rect x="96" y="108" width="12" height="3" />
-                            <rect x="96" y="115" width="12" height="3" /><rect x="96" y="122" width="12" height="3" />
-                            <rect x="96" y="129" width="12" height="3" /><rect x="96" y="136" width="12" height="3" />
-                        </g>
-
-                        <rect x="22" y="10" width="76" height="140" fill="#141414" stroke="#222" stroke-width="2" rx="3"/>
-                        
-                        <rect x="24" y="12" width="72" height="25" fill="#1b1b1b" rx="2"/>
-                        
-                        <path d="M28 32 L28 16 L36 16 L36 28 L44 28 L44 16 L52 16 L52 28 L60 28 L60 16 L68 16 L68 28 L76 28 L76 16 L84 16 L84 32" fill="none" stroke="#d32f2f" stroke-width="2.5" stroke-linejoin="miter"/>
-                        
-                        <path d="M45 130 L45 105 L35 95" fill="none" stroke="#333" stroke-width="1.5"/>
-                        <path d="M55 130 L55 110 L65 100" fill="none" stroke="#333" stroke-width="1.5"/>
-                        <path d="M75 130 L75 115 L85 105" fill="none" stroke="#333" stroke-width="1.5"/>
-                        <path d="M35 55 L45 65 L45 75" fill="none" stroke="#333" stroke-width="1.5"/>
-                        <path d="M85 55 L75 65 L75 75" fill="none" stroke="#333" stroke-width="1.5"/>
-                        
-                        <rect x="32" y="50" width="56" height="65" fill="url(#coreGlow)" stroke="#3a3a3a" stroke-width="1" rx="2"/>
-                        
-                        <polygon points="60,60 70,85 55,80 50,100 45,80 55,75" fill="url(#fireGradient)"/>
-                        
-                        <rect x="35" y="122" width="4" height="8" fill="#cda434"/>
-                        <rect x="42" y="122" width="4" height="8" fill="#111" stroke="#444" stroke-width="1"/>
-                        <rect x="74" y="122" width="4" height="8" fill="#cda434"/>
-                        <rect x="81" y="122" width="4" height="8" fill="#111" stroke="#444" stroke-width="1"/>
-                        
-                        <polygon points="26,42 32,42 26,48" fill="#d32f2f"/>
+                    <svg viewBox="0 0 100 100" width="80" height="80" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="18" y="25" width="10" height="4" fill="#666" rx="1"/>
+                        <rect x="18" y="36" width="10" height="4" fill="#666" rx="1"/>
+                        <rect x="18" y="47" width="10" height="4" fill="#666" rx="1"/>
+                        <rect x="18" y="58" width="10" height="4" fill="#666" rx="1"/>
+                        <rect x="18" y="69" width="10" height="4" fill="#666" rx="1"/>
+                        <rect x="72" y="25" width="10" height="4" fill="#666" rx="1"/>
+                        <rect x="72" y="36" width="10" height="4" fill="#666" rx="1"/>
+                        <rect x="72" y="47" width="10" height="4" fill="#666" rx="1"/>
+                        <rect x="72" y="58" width="10" height="4" fill="#666" rx="1"/>
+                        <rect x="72" y="69" width="10" height="4" fill="#666" rx="1"/>
+                        <rect x="25" y="15" width="50" height="70" fill="#2a2a2a" stroke="#444" stroke-width="2" rx="4"/>
+                        <rect x="36" y="38" width="28" height="28" fill="#151515" rx="2"/>
+                        <circle cx="33" cy="24" r="3" fill="#555"/>
+                        <path d="M38 72 L62 72" stroke="#444" stroke-width="2" stroke-linecap="round"/>
                     </svg>
                     <span data-i18n="boardPlaceholder">-- Select a board --</span>
                 </div>
