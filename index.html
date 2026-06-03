@@ -3,6 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />    
+
     <title>OpenFIRE ESP32 Web Flasher</title>
     <style>
         :root {
@@ -718,7 +723,7 @@
                 progressText.innerText = t('loadingDrivers');
                 logMsg(t('loadingDrivers'));
                 try {
-                    const esptoolModule = await import("./js/bundle.js");
+                    const esptoolModule = await import("./js/bundle.js?v=0.6.0"); // https://github.com/espressif/esptool-js/releases
                     window.ESPLoader = esptoolModule.ESPLoader;
                     window.Transport = esptoolModule.Transport;
                 } catch (importErr) {
@@ -781,7 +786,7 @@
                 }
             });
 
-            // logMsg(t('connChip')); // ?????????????????????????????
+            // logMsg(t('connChip')); // omesso perchè viene già scritto nei log da esptools-js
             
             // 2. Connessione al chip
             await esploader.main();
