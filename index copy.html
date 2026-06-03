@@ -345,7 +345,7 @@
     const IMG_BASE_URL = `https://github.com/${REPO_OWNER}/${REPO_NAME}/raw/main/docs/board_scheme/`;
     
     let allReleases = [];
-    let activeManifest = null;
+    let currentAssets = [];
     let targetTag = "";
     let latestGlobalTag = "";
 
@@ -415,6 +415,32 @@
 
             const releases = await response.json();
             
+            /*
+            if (releases.length > 0) {
+                allReleases = releases.slice(0, 10);
+                latestGlobalTag = allReleases[0].tag_name;
+
+                if (requestedTag) {
+                    const found = allReleases.some(r => r.tag_name === requestedTag);
+                    if (!found) {
+                        const oldRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/tags/${requestedTag}`);
+                        if (oldRes.ok) {
+                            const oldRelease = await oldRes.json();
+                            allReleases.push(oldRelease); 
+                        } else {
+                            requestedTag = latestGlobalTag; 
+                        }
+                    }
+                    targetTag = requestedTag;
+                } else {
+                    targetTag = latestGlobalTag;
+                }
+
+                populateVersionSelect();
+                updateActiveReleaseData();
+                document.getElementById('deviceType').disabled = false;
+            } else {
+            */    
             if (releases.length > 0) {
                 allReleases = releases.slice(0, 10);
                 latestGlobalTag = allReleases[0].tag_name;
@@ -436,32 +462,45 @@
                     targetTag = latestGlobalTag;
                 }
 
-                // 2. VERIFICA L'ESISTENZA DELLA CARTELLA SCARICANDO IL MANIFEST.JSON
+                // 2. CONTROLLA L'ESISTENZA DEI FILE PER TUTTE LE VERSIONI IN LISTA
                 const availabilityChecks = allReleases.map(async (r) => {
-                    try {
-                        const manifestUrl = `firmware/${r.tag_name}/manifest.json`;
-                        const res = await fetch(manifestUrl, { cache: 'no-cache' });
-                        if (res.ok) {
-                            r.isLocallyAvailable = true;
-                            r.manifest = await res.json();
-                        } else {
-                            r.isLocallyAvailable = false;
-                            r.manifest = null;
-                        }
-                    } catch (e) {
+                    if (!r.assets || r.assets.length === 0) {
                         r.isLocallyAvailable = false;
-                        r.manifest = null;
+                        return;
+                    }
+                    
+                    // Prende solo gli asset che sono file firmware (.bin)
+                    const binAssets = r.assets.filter(a => a.name.endsWith('.bin'));
+                    if (binAssets.length === 0) {
+                        r.isLocallyAvailable = false;
+                        return;
+                    }
+
+                    // Creiamo un test HEAD per ogni singolo file .bin di quella versione
+                    const assetChecks = binAssets.map(async (asset) => {
+                        const testUrl = `firmware/${r.tag_name}/${asset.name}`;
+                        const res = await fetch(testUrl, { method: 'HEAD', cache: 'no-cache' });
+                        if (res.ok) return true;
+                        throw new Error("Mancante"); // Lancia errore se è 404
+                    });
+
+                    try {
+                        // LA MAGIA: Promise.any dà esito positivo appena UN file viene trovato!
+                        await Promise.any(assetChecks);
+                        r.isLocallyAvailable = true;
+                    } catch (e) {
+                        // Se TUTTI i file danno 404, allora la versione è considerata vuota.
+                        r.isLocallyAvailable = false;
                     }
                 });
-
-                await Promise.all(availabilityChecks);
 
                 // 3. SICUREZZA
                 const firstAvailable = allReleases.find(r => r.isLocallyAvailable);
                 const selectedRel = allReleases.find(r => r.tag_name === targetTag);
                 
                 if (selectedRel && !selectedRel.isLocallyAvailable) {
-                    // Se la versione scelta dal link non ha il manifest, scala sulla prima funzionante.
+                    // Se la versione scelta dal link non ha file, scala sulla prima funzionante.
+                    // Se proprio nessuna ha file, resta sul latestGlobalTag per non rompere l'UI.
                     targetTag = firstAvailable ? firstAvailable.tag_name : latestGlobalTag;
                 }
 
@@ -490,7 +529,25 @@
         setupUI();
     }
 
+    /*
     function populateVersionSelect() {
+        if(allReleases.length === 0) return;
+        const vSelect = document.getElementById('versionSelect');
+        vSelect.innerHTML = "";
+        
+        allReleases.forEach(r => {
+            const opt = document.createElement('option');
+            opt.setAttribute('value', r.tag_name);
+            opt.innerText = r.tag_name + (r.prerelease ? t('prerelease') : t('stable'));
+            if (r.tag_name === targetTag) opt.selected = true;
+            vSelect.appendChild(opt);
+        });
+        
+        checkObsoleteWarning();
+    }
+    */
+
+function populateVersionSelect() {
         if(allReleases.length === 0) return;
         const vSelect = document.getElementById('versionSelect');
         vSelect.innerHTML = "";
@@ -502,16 +559,18 @@
             let label = r.tag_name + (r.prerelease ? t('prerelease') : t('stable'));
 
             if (r.isLocallyAvailable) {
-                // La cartella esiste (ha il manifest), l'opzione è normale
+                // La cartella esiste, l'opzione è normale
                 opt.innerText = label;
             } else {
-                // La cartella NON ha il manifest, l'opzione è grigia e bloccata
+                // La cartella NON esiste, l'opzione è grigia e bloccata
                 opt.innerText = label + t('unavailableRelease');
                 opt.disabled = true;
                 opt.style.color = "#777777"; 
                 opt.style.fontStyle = "italic";
             }
 
+            // L'assegnazione della selezione è spostata QUI FUORI.
+            // Garantisce che il menu mostri sempre il targetTag corretto.
             if (r.tag_name === targetTag) {
                 opt.selected = true;
             }
@@ -524,10 +583,10 @@
 
     function updateActiveReleaseData() {
         const selectedRelease = allReleases.find(r => r.tag_name === targetTag);
-        if (selectedRelease && selectedRelease.manifest) {
-            activeManifest = selectedRelease.manifest;
+        if (selectedRelease) {
+            currentAssets = selectedRelease.assets.map(a => a.name);
         } else {
-            activeManifest = null;
+            currentAssets = [];
         }
     }
 
@@ -565,7 +624,7 @@
             if (devSelect.value !== "") devSelect.dispatchEvent(new Event('change'));
         });
 
-        // POPOLAMENTO SCHEDE TRAMITE MANIFEST (Istantaneo e sincrono)
+        /*
         devSelect.addEventListener('change', (e) => {
             const dev = e.target.value;
             const previousBoard = boardSelect.value; 
@@ -576,12 +635,15 @@
             boardPreviewBox.style.display = 'none';
             flashBtn.disabled = true;
 
-            // Verifica se il manifest ha la lista per il dispositivo selezionato
-            if (dev && boards[dev] && activeManifest && activeManifest.supported_boards && activeManifest.supported_boards[dev]) {
-                const manifestBoards = activeManifest.supported_boards[dev]; // Array di ID estratti dal manifest
-                
-                // Filtra il dizionario interno tenendo SOLO le schede elencate nel manifest
-                const schedeDisponibili = boards[dev].filter(b => manifestBoards.includes(b.id));
+            if (dev && boards[dev]) {
+                const schedeDisponibili = boards[dev].filter(b => {
+                    if (dev === 'LIGHTGUN') {
+                        return currentAssets.includes(`OpenFIRE-LIGHTGUN-NoFS-${b.id}.bin`) || 
+                               currentAssets.includes(`OpenFIRE-LIGHTGUN-${b.id}.bin`);
+                    } else {
+                        return currentAssets.includes(`OpenFIRE-${dev}-${b.id}.bin`);
+                    }
+                });
 
                 if (schedeDisponibili.length > 0) {
                     schedeDisponibili.forEach(b => {
@@ -592,7 +654,99 @@
                     });
                     
                     if (previousBoard) {
-                        const matchedOpt = Array.from(boardSelect.options).find(o => o.value === previousBoard);
+                        boardSelect.value = previousBoard;
+                        if (boardSelect.value === previousBoard) {
+                            boardSelect.dispatchEvent(new Event('change'));
+                        }
+                    }
+                } else {
+                    boardSelect.innerHTML = `<option value="" data-i18n="noFirmware">${t('noFirmware')}</option>`;
+                }
+            }
+            checkReady(); 
+        });
+        */
+
+        devSelect.addEventListener('change', async (e) => {
+            const dev = e.target.value;
+            const previousBoard = boardSelect.value; 
+            const currentTargetTag = targetTag; // <-- TIMBRO DELLA VERSIONE
+            
+            boardSelect.innerHTML = `<option value="" data-i18n="selectBoard">${t('selectBoard')}</option>`;
+            boardGroup.style.display = dev ? 'block' : 'none';
+            fsGroup.style.display = (dev === 'LIGHTGUN') ? 'block' : 'none';
+            boardPreviewBox.style.display = 'none';
+            flashBtn.disabled = true;
+
+            if (dev && boards[dev]) {
+                const schedePotenziali = boards[dev].filter(b => {
+                    if (dev === 'LIGHTGUN') {
+                        return currentAssets.includes(`OpenFIRE-LIGHTGUN-NoFS-${b.id}.bin`) || 
+                               currentAssets.includes(`OpenFIRE-LIGHTGUN-${b.id}.bin`);
+                    } else {
+                        return currentAssets.includes(`OpenFIRE-${dev}-${b.id}.bin`);
+                    }
+                });
+
+                if (schedePotenziali.length > 0) {
+                    boardSelect.disabled = true;
+                    const defaultOpt = boardSelect.options[0];
+                    const origText = defaultOpt.innerText;
+                    defaultOpt.innerText = "Verifica disponibilità...";
+
+                    const boardChecks = schedePotenziali.map(async (b) => {
+                        b.isLocallyAvailable = false;
+                        let fileNamesToCheck = [];
+                        
+                        if (dev === 'LIGHTGUN') {
+                            fileNamesToCheck.push(`OpenFIRE-LIGHTGUN-NoFS-${b.id}.bin`);
+                            fileNamesToCheck.push(`OpenFIRE-LIGHTGUN-${b.id}.bin`);
+                        } else {
+                            fileNamesToCheck.push(`OpenFIRE-${dev}-${b.id}.bin`);
+                        }
+
+                        const fileChecks = fileNamesToCheck.map(async (fName) => {
+                            const testUrl = `firmware/${targetTag}/${fName}`;
+                            const res = await fetch(testUrl, { method: 'HEAD', cache: 'no-cache' });
+                            if (res.ok) return true;
+                            throw new Error("Missing");
+                        });
+
+                        try {
+                            await Promise.any(fileChecks);
+                            b.isLocallyAvailable = true;
+                        } catch(e) {
+                            b.isLocallyAvailable = false;
+                        }
+                    });
+
+                    await Promise.all(boardChecks);
+                    
+                    // --- CONTROLLO ANTI-RACE CONDITION DOPPIO ---
+                    // Ignora i risultati se nel frattempo l'utente ha cambiato dispositivo o versione!
+                    if (devSelect.value !== dev || targetTag !== currentTargetTag) return;
+
+                    defaultOpt.innerText = origText;
+                    boardSelect.disabled = false;
+
+                    schedePotenziali.forEach(b => {
+                        const opt = document.createElement('option');
+                        opt.value = b.id;
+                        
+                        if (b.isLocallyAvailable) {
+                            opt.innerText = b.name;
+                        } else {
+                            opt.innerText = b.name + t('unavailableRelease');
+                            opt.disabled = true;
+                            opt.style.color = "#777777";
+                            opt.style.fontStyle = "italic";
+                        }
+                        
+                        boardSelect.appendChild(opt);
+                    });
+                    
+                    if (previousBoard) {
+                        const matchedOpt = Array.from(boardSelect.options).find(o => o.value === previousBoard && !o.disabled);
                         if (matchedOpt) {
                             boardSelect.value = previousBoard;
                             boardSelect.dispatchEvent(new Event('change'));
@@ -601,9 +755,6 @@
                 } else {
                     boardSelect.innerHTML = `<option value="" data-i18n="noFirmware">${t('noFirmware')}</option>`;
                 }
-            } else if (dev) {
-                // Se non c'è il manifest o l'array del dispositivo è vuoto
-                boardSelect.innerHTML = `<option value="" data-i18n="noFirmware">${t('noFirmware')}</option>`;
             }
             checkReady(); 
         });
@@ -628,7 +779,7 @@
 
         fsSelect.addEventListener('change', () => { checkReady(); });
 
-        // VERIFICA DEL TASTO FLASH TRAMITE MANIFEST (Istantanea)
+        /*
         function checkReady() {
             const dev = devSelect.value;
             const board = boardSelect.value;
@@ -636,9 +787,7 @@
 
             if (isReady) {
                 const fileName = buildFileName();
-                
-                // Cerca semplicemente il nome esatto del file nell'array "files" del JSON
-                if (!activeManifest || !activeManifest.files || !activeManifest.files.includes(fileName)) {
+                if (!currentAssets.includes(fileName)) {
                     isReady = false;
                     flashBtn.setAttribute('data-i18n', 'btnUnavailable');
                 } else {
@@ -651,10 +800,61 @@
             flashBtn.innerHTML = t(flashBtn.getAttribute('data-i18n'));
             flashBtn.disabled = !isReady;
         }
+        */
+        async function checkReady() {
+            flashBtn.disabled = true;
+            
+            const dev = devSelect.value;
+            const board = boardSelect.value;
+            const currentTargetTag = targetTag; // <-- TIMBRO DELLA VERSIONE
+
+            // Se l'utente non ha compilato i menu, tieni il tasto "neutro" e spegnilo
+            if (dev === "" || board === "") {
+                const currentFileName = (devSelect.value !== "" && boardSelect.value !== "") ? buildFileName() : null;
+                if (targetTag !== currentTargetTag) return;
+                
+                flashBtn.setAttribute('data-i18n', 'btnFlash');
+                flashBtn.innerHTML = t('btnFlash');
+                return; 
+            }
+
+            // Menu compilati, inizio il controllo chirurgico
+            const initialFileName = buildFileName();
+            let fileExists = true;
+
+            if (!currentAssets.includes(initialFileName)) {
+                fileExists = false;
+            } else {
+                try {
+                    const testUrl = `firmware/${targetTag}/${initialFileName}`;
+                    const res = await fetch(testUrl, { method: 'HEAD', cache: 'no-cache' });
+                    if (!res.ok) fileExists = false; 
+                } catch(e) {
+                    fileExists = false;
+                }
+            }
+            
+            // --- CONTROLLO ANTI-RACE CONDITION DOPPIO ---
+            const currentFileName = (devSelect.value !== "" && boardSelect.value !== "") ? buildFileName() : null;
+            if (initialFileName !== currentFileName || targetTag !== currentTargetTag) return;
+            
+            // Applica l'esito al pulsante
+            if (fileExists) {
+                flashBtn.setAttribute('data-i18n', 'btnFlash');
+                flashBtn.disabled = false;
+            } else {
+                flashBtn.setAttribute('data-i18n', 'btnUnavailable');
+                flashBtn.disabled = true;
+            }
+            
+            flashBtn.innerHTML = t(flashBtn.getAttribute('data-i18n'));
+        }
 
         flashBtn.addEventListener('click', startFlashing);
     }
     
+
+
     function buildFileName() {
         const dev = document.getElementById('deviceType').value;
         const board = document.getElementById('boardType').value;
@@ -702,9 +902,9 @@
 
         const fileName = buildFileName();
 
-        // Controllo validità finale basato sul manifest JSON
+        // Controllo validità: controlla nell'elenco API se il file esiste
         const releaseObj = allReleases.find(r => r.tag_name === targetTag);
-        if (!releaseObj || !activeManifest || !activeManifest.files.includes(fileName)) {
+        if (!releaseObj || !currentAssets.includes(fileName)) {
             alert(t('err404UI'));
             window.location.reload();
             return;
