@@ -267,6 +267,12 @@
             </div>
         </div>
     </div>
+    <div class="form-group" id="cameraGroup" style="display: none; margin-bottom: 25px;">
+        <label for="cameraType" data-i18n="cameraLabel">3. Choose IR Camera:</label>
+        <select id="cameraType">
+            <option value="" data-i18n="selectCamera">-- Select Camera --</option>
+        </select>
+    </div>
     <div class="form-group" id="fsGroup" style="display: none; margin-bottom: 25px;">
         <label for="fsType" data-i18n="fsLabel">3. Installation Type (Lightgun):</label>
         <select id="fsType">
@@ -301,7 +307,10 @@
             boardLabel: "2. Choose your Board (ESP32-S3):",
             selectBoard: "-- Select Board --",
             noFirmware: "(No firmware available in this release)",
+            cameraLabel: "3. Choose IR Camera:",
+            selectCamera: "-- Select Camera --",
             fsLabel: "3. Installation Type (Lightgun):",
+            fsLabelWithCamera: "4. Installation Type (Lightgun):",
             fsBase: "Base Update (Recommended - Keeps your calibrations and settings intact)",
             fsClean: "Clean Install (Warning - Completely erases memory and calibrations)",
             instructions: "<strong>⚡ Important Instructions:</strong><br>1. Use a good data USB cable.<br>2. Click Flash and <b>select the port (click the port name to unlock the Connect button)</b>.<br>3. If the port doesn't appear or the board fails to connect:<br> - Hold <b>BOOT</b>.<br> - Press and release <b>RESET</b> (while still holding BOOT).<br> - Release <b>BOOT</b>.<br><i>(Alternative: unplug USB, hold BOOT, plug USB back in, then release BOOT).</i>",
@@ -362,7 +371,10 @@
             boardLabel: "2. Scegli la tua Scheda (ESP32-S3):",
             selectBoard: "-- Seleziona Scheda --",
             noFirmware: "(Nessun firmware disponibile in questa release)",
+            cameraLabel: "3. Scegli la Camera IR:",
+            selectCamera: "-- Seleziona Camera --",
             fsLabel: "3. Tipo di Installazione (Lightgun):",
+            fsLabelWithCamera: "4. Tipo di Installazione (Lightgun):",
             fsBase: "Aggiornamento Base (Consigliato - Mantiene intatte le calibrazioni e le impostazioni)",
             fsClean: "Installazione Pulita (Attenzione - Cancella completamente la memoria e le calibrazioni)",
             instructions: "<strong>⚡ Istruzioni Importanti:</strong><br>1. Usa un cavo USB dati di buona qualità.<br>2. Clicca su Flash e <b>seleziona la porta (clicca sul nome della porta per sbloccare il tasto Connetti)</b>.<br>3. Se la porta non compare o la scheda non si connette:<br> - Tieni premuto <b>BOOT</b>.<br> - Premi e rilascia <b>RESET</b> (mentre tieni ancora premuto BOOT).<br> - Rilascia <b>BOOT</b>.<br><i>(Alternativa: scollega l'USB, tieni premuto BOOT, ricollega l'USB, poi rilascia BOOT).</i>",
@@ -494,6 +506,23 @@
             { id: "WAVESHARE_ESP32_S3_ZERO_N4R2", name: "Waveshare ZERO (N4R2)", img: "esp32-s3-zero.svg" }
         ]
     };
+
+    const cameras = [
+        { id: "DFROBOT_SEN0158", name: "DFRobot SEN0158 / WiiCam" },
+        { id: "PIXART_PAJ7025R2", name: "PixArt PAJ7025R2" },
+        { id: "PIXART_PAJ7025R3", name: "PixArt PAJ7025R3" }
+    ];
+
+    function getSupportedLightgunCameras() {
+        if (!activeManifest || !activeManifest.supported_cameras || !Array.isArray(activeManifest.supported_cameras.LIGHTGUN)) {
+            return [];
+        }
+        return activeManifest.supported_cameras.LIGHTGUN;
+    }
+
+    function hasCameraSelection() {
+        return getSupportedLightgunCameras().length > 0;
+    }
 
     async function init() {
         const urlParams = new URLSearchParams(window.location.search);
@@ -676,8 +705,11 @@
         const devSelect = document.getElementById('deviceType');
         const boardSelect = document.getElementById('boardType');
         const boardGroup = document.getElementById('boardGroup');
+        const cameraGroup = document.getElementById('cameraGroup');
+        const cameraSelect = document.getElementById('cameraType');
         const fsGroup = document.getElementById('fsGroup');
         const fsSelect = document.getElementById('fsType');
+        const fsLabel = document.querySelector('label[for="fsType"]');
         const flashBtn = document.getElementById('flashBtn');
         const boardImage = document.getElementById('boardImage');
         const boardPlaceholder = document.getElementById('boardPlaceholder'); // NUOVO RIFERIMENTO
@@ -703,14 +735,40 @@
         // POPOLAMENTO SCHEDE TRAMITE MANIFEST (Istantaneo e sincrono)
         devSelect.addEventListener('change', (e) => {
             const dev = e.target.value;
-            const previousBoard = boardSelect.value; 
+            const previousBoard = boardSelect.value;
+            const previousCamera = cameraSelect.value;
+            const cameraEnabled = (dev === 'LIGHTGUN' && hasCameraSelection());
             
             boardSelect.innerHTML = `<option value="" data-i18n="selectBoard">${t('selectBoard')}</option>`;
+            cameraSelect.innerHTML = `<option value="" data-i18n="selectCamera">${t('selectCamera')}</option>`;
             //boardGroup.style.display = dev ? 'block' : 'none';
             //fsGroup.style.display = (dev === 'LIGHTGUN') ? 'block' : 'none';
             // Sostituiamo display con visibility per mantenere le proporzioni del layout
             boardGroup.style.visibility = dev ? 'visible' : 'hidden';
+            cameraGroup.style.display = cameraEnabled ? 'block' : 'none';
             fsGroup.style.display = (dev === 'LIGHTGUN') ? 'block' : 'none';
+
+            fsLabel.setAttribute('data-i18n', cameraEnabled ? 'fsLabelWithCamera' : 'fsLabel');
+            fsLabel.innerHTML = t(fsLabel.getAttribute('data-i18n'));
+
+            if (cameraEnabled) {
+                const manifestCameras = getSupportedLightgunCameras();
+                const availableCameras = cameras.filter(c => manifestCameras.includes(c.id));
+
+                availableCameras.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.id;
+                    opt.innerText = c.name;
+                    cameraSelect.appendChild(opt);
+                });
+
+                if (previousCamera) {
+                    const matchedCamera = Array.from(cameraSelect.options).find(o => o.value === previousCamera);
+                    if (matchedCamera) cameraSelect.value = previousCamera;
+                }
+            } else {
+                cameraSelect.value = "";
+            }
             
             // Invece di nascondere il box, ripristiniamo il placeholder
             boardImage.style.display = 'none';
@@ -771,13 +829,16 @@
             checkReady();
         });
 
+        cameraSelect.addEventListener('change', () => { checkReady(); });
         fsSelect.addEventListener('change', () => { checkReady(); });
 
         // VERIFICA DEL TASTO FLASH TRAMITE MANIFEST (Istantanea)
         function checkReady() {
             const dev = devSelect.value;
             const board = boardSelect.value;
-            let isReady = (dev !== "" && board !== "");
+            const cameraRequired = (dev === 'LIGHTGUN' && hasCameraSelection());
+            const camera = cameraSelect.value;
+            let isReady = (dev !== "" && board !== "" && (!cameraRequired || camera !== ""));
 
             if (isReady) {
                 const fileName = buildFileName();
@@ -803,9 +864,16 @@
     function buildFileName() {
         const dev = document.getElementById('deviceType').value;
         const board = document.getElementById('boardType').value;
+        const camera = document.getElementById('cameraType').value;
         const fs = document.getElementById('fsType').value;
 
         if (dev === 'LIGHTGUN') {
+            if (hasCameraSelection()) {
+                if (fs === 'NoFS') return `OpenFIRE-LIGHTGUN-NoFS-${camera}-${board}.bin`;
+                else return `OpenFIRE-LIGHTGUN-${camera}-${board}.bin`;
+            }
+
+            // Compatibilita' con le vecchie release senza selezione CAMERA nel manifest.
             if (fs === 'NoFS') return `OpenFIRE-LIGHTGUN-NoFS-${board}.bin`;
             else return `OpenFIRE-LIGHTGUN-${board}.bin`;
         } else {
