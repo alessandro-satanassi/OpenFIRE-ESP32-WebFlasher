@@ -959,6 +959,12 @@
                 { usbVendorId: 0x303A, usbProductId: 0x1001 }, // Espressif USB JTAG/Serial
                 { usbVendorId: 0x303A, usbProductId: 0x1002 }, // Espressif ESP32-S2 USB JTAG/Serial
                 { usbVendorId: 0x303A, usbProductId: 0x1009 }, // Espressif ESP32-S3 USB JTAG/Serial
+
+                // === AGGIUNTE PER MODALITA' RUNTIME / OTG (OpenFIRE Attivo) ===
+                { usbVendorId: 0x303A, usbProductId: 0x4001 }, // Espressif TinyUSB CDC (Runtime)
+                { usbVendorId: 0x239A, usbProductId: 0xCAFE }, // Adafruit TinyUSB Generic Fallback
+                { usbVendorId: 0x239A, usbProductId: 0x8113 }, // Adafruit Feather S3 (usata a volte come base)
+                { usbVendorId: 0x1209, usbProductId: 0x4001 }, // PID.codes Generic Open Source CDC
                 
                 // FTDI (Molto rari oggi, ma usati su vecchie schede)
                 { usbVendorId: 0x0403, usbProductId: 0x6001 }, // FT232R
