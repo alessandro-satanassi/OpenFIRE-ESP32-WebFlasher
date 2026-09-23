@@ -1,0 +1,6 @@
+{
+  "versions": [
+    { "tag_name": "v6.2.1", "prerelease": false },
+    { "tag_name": "v6.2.0", "prerelease": false }
+  ]
+}
