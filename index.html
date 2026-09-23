@@ -34,6 +34,9 @@
             --shadow: 0 1px 2px rgba(20, 28, 45, 0.06), 0 2px 6px rgba(20, 28, 45, 0.06);
             --shadow-pop: 0 10px 30px rgba(20, 28, 45, 0.22);
             --card-lift: 0 10px 26px rgba(20, 28, 45, 0.14);
+            /* Il vetro del riquadro: la superficie del tema, ma semitrasparente,
+               come sui pannelli della pagina degli strumenti e della home della Web App. */
+            --panel-glass: rgba(255, 255, 255, 0.72);
             --radius: 8px;
             --control-h: 32px;
             --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -65,6 +68,7 @@
                 --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.25);
                 --shadow-pop: 0 12px 34px rgba(0, 0, 0, 0.55);
                 --card-lift: 0 12px 30px rgba(0, 0, 0, 0.5);
+                --panel-glass: rgba(29, 32, 39, 0.72);
 
                 --accent-hover: #1d8fcc;
                 --danger: #f2554b;
@@ -90,6 +94,7 @@
             --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.25);
             --shadow-pop: 0 12px 34px rgba(0, 0, 0, 0.55);
             --card-lift: 0 12px 30px rgba(0, 0, 0, 0.5);
+            --panel-glass: rgba(29, 32, 39, 0.72);
 
             --accent-hover: #1d8fcc;
             --danger: #f2554b;
@@ -198,12 +203,16 @@
         /* ----- Impaginazione ---------------------------------------------------- */
         main { flex: 1; width: 100%; max-width: 982px; margin: 0 auto; padding: 28px 16px 44px; }
 
+        /* Il riquadro e' di vetro: e' posizionato perche' deve stare sopra al
+           bagliore, non sotto, e cosi' il bagliore si intravede attraverso. */
         .container {
-            background: var(--surface);
+            background: var(--panel-glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             width: 100%;
             padding: 40px;
             border-radius: 12px;
-            box-shadow: var(--shadow);
+            box-shadow: var(--card-lift);
             border: 1px solid var(--border);
             position: relative;
         }
@@ -224,7 +233,7 @@
 
         /* Come sulla home della Web App: il nome nel colore del testo, la parola
            che dice che pagina e' nel colore d'accento. */
-        h1 { margin-top: 0; color: var(--text); font-size: 26px; text-align: left; margin-bottom: 30px; letter-spacing: -0.01em; }
+        h1 { margin-top: 0; color: var(--text); font-size: 30px; text-align: center; margin-bottom: 30px; letter-spacing: -0.015em; }
         h1 .accent { color: var(--accent); }
 
         .form-group { margin-bottom: 22px; }
@@ -332,7 +341,7 @@
             .brand-name { font-size: 0.88rem; }
             main { padding: 18px 12px 32px; }
             .container { padding: 22px 18px; }
-            h1 { font-size: 22px; margin-bottom: 22px; }
+            h1 { font-size: 25px; margin-bottom: 22px; }
         }
         @media (max-width: 420px) {
             .brand-name { display: none; }
