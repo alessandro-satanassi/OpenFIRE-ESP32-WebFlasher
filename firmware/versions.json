@@ -1,6 +1,10 @@
 {
   "versions": [
     {
+      "tag_name": "v7.0.0-rc2",
+      "prerelease": true
+    },
+    {
       "tag_name": "v7.0.0-rc1",
       "prerelease": true
     },
