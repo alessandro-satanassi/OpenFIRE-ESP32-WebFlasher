@@ -1,5 +1,29 @@
 # OpenFIRE-ESP32-WebFlasher
 
+## English — Installing 7.0.0
+
+Open the **[Web Flasher](https://alessandro-satanassi.github.io/OpenFIRE-ESP32-WebFlasher/?lang=en)** in Chrome or Edge on a computer. Choose the version, **Lightgun / Dongle / Pedal**, and the exact board including its flash/PSRAM variant. Connect that device's own USB data port, authorize it, and follow the installation steps.
+
+The lightgun has **one image per board**, supporting DFRobot/Wii and PAJ7025R2/R3. Choose the camera later in the configuration WebApp. A **base update** preserves stored settings; a **clean install** erases the whole flash, including all settings and calibration, then writes the same image. A clean installation is recommended when moving from 6.2.1: note the old settings first and recalibrate afterwards.
+
+On a lightgun already running 7.0.0, hold **Trigger + A** for about **2 seconds at startup** to enter flashing mode. A blank board or recovery may require its physical BOOT/RESET procedure. If the gun is running normally, the Web Flasher can also restart it into flashing mode by itself: the serial port then changes, so select the new port and retry. Flash each device directly, not through the wireless dongle or Wi-Fi.
+
+After installation open the **[Configuration WebApp](https://alessandro-satanassi.github.io/OpenFIRE-ESP32-WebApp/?lang=en)**. [Full user guide](https://github.com/alessandro-satanassi/OpenFIRE-Firmware-ESP32/blob/main/lightgun/README.md#english-version) · [Project hub](https://alessandro-satanassi.github.io/OpenFIRE-ESP32/?lang=en) · [Getting Started](https://github.com/alessandro-satanassi/OpenFIRE-Firmware-ESP32#getting-started) · [Common Problems](https://github.com/alessandro-satanassi/OpenFIRE-Firmware-ESP32/blob/main/lightgun/src/README.md#common-problems)
+
+## Italiano — Installazione della 7.0.0
+
+Apri il **[Web Flasher](https://alessandro-satanassi.github.io/OpenFIRE-ESP32-WebFlasher/?lang=it)** con Chrome o Edge su computer. Scegli la versione, **Lightgun / Dongle / Pedal** e la scheda esatta, inclusa la variante flash/PSRAM. Collega la porta USB dati del dispositivo stesso, autorizzala e segui la procedura.
+
+La lightgun ha **una sola immagine per scheda**, che supporta DFRobot/Wii e PAJ7025R2/R3. La telecamera si sceglie successivamente nella WebApp di configurazione. Un **aggiornamento base** conserva le impostazioni; un'**installazione pulita** cancella l'intera flash, comprese tutte le impostazioni e calibrazioni, poi scrive la stessa immagine. Passando dalla 6.2.1 è consigliata l'installazione pulita: annota prima i valori precedenti e ricalibra dopo l'aggiornamento.
+
+Su una lightgun che esegue già la 7.0.0 tieni premuti **Grilletto + A** per circa **2 secondi all'avvio** per entrare in modalità flashing. Una scheda vuota o il recupero possono richiedere la procedura BOOT/RESET fisica. Se la pistola è in funzionamento normale, il Web Flasher può anche riavviarla da solo in modalità flashing: la porta seriale cambia, quindi seleziona la nuova porta e riprova. Aggiorna ogni dispositivo direttamente, non attraverso il dongle wireless o il Wi-Fi.
+
+Dopo l'installazione apri la **[WebApp di configurazione](https://alessandro-satanassi.github.io/OpenFIRE-ESP32-WebApp/?lang=it)**. [Guida completa](https://github.com/alessandro-satanassi/OpenFIRE-Firmware-ESP32/blob/main/lightgun/README.md#versione-italiana) · [Hub del progetto](https://alessandro-satanassi.github.io/OpenFIRE-ESP32/?lang=it) · [Primi passi](https://github.com/alessandro-satanassi/OpenFIRE-Firmware-ESP32#primi-passi) · [Problemi comuni](https://github.com/alessandro-satanassi/OpenFIRE-Firmware-ESP32/blob/main/lightgun/src/README.md#problemi-comuni-italiano)
+
+---
+
+## Publication reference (maintainers)
+
 ## Local firmware catalog
 
 The version menu reads `firmware/versions.json`, not the GitHub Releases API.
